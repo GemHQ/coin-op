@@ -13,3 +13,16 @@ require "coin-op"
 include CoinOp::Bit
 
 ```
+
+# Developers
+
+Installing dependencies:
+
+    gem install starter
+    rake gem:deps
+
+Running the tests:
+
+    rake test
+
+
