@@ -21,6 +21,8 @@ Gem::Specification.new do |s|
 
   s.add_dependency("bitcoin-ruby", "0.0.5")
   s.add_dependency("money-tree", "~> 0.8")
+  s.add_dependency("rbnacl")
+  s.add_dependency("http")
 
   s.add_development_dependency("starter", "0.1.12")
   s.add_development_dependency("sequel", "~> 4.8")
