@@ -56,14 +56,17 @@ module CoinOp::Bit
       @native.script_sig = blob
     end
 
-
-    def to_json(*a)
+    def to_hash
       {
         :output => self.output,
         :signatures => self.signatures.map {|b| base58(b) },
         :sig_hash => self.sig_hash || "",
         :script_sig => self.script_sig || ""
-      }.to_json(*a)
+      }
+    end
+
+    def to_json(*a)
+      self.to_hash.to_json(*a)
     end
 
   end
