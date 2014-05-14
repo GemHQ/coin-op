@@ -4,17 +4,13 @@ $LOAD_PATH.unshift "#{project_root}/../starter/lib"
 require "starter/tasks/gems"
 require "starter/tasks/git"
 require "starter/markdown/extender"
+require "bundler/gem_tasks"
+require "rspec/core/rake_task"
 
+RSpec::Core::RakeTask.new
 
-task "test" => %w[ test:unit ]
-
-task "test:unit" do
-  puts "Running unit tests"
-  unit_test_files.each do |file|
-    sh "ruby #{file}"
-  end
-end
-
+task :default => :spec
+task :test => :spec
 
 task "doc" => %w[ doc:readme doc:examples ] do
   doc_files.each do |file|

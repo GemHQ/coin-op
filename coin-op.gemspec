@@ -25,6 +25,8 @@ Gem::Specification.new do |s|
   s.add_development_dependency("starter", "0.1.12")
   s.add_development_dependency("sequel", "~> 4.8")
   s.add_development_dependency("sqlite3", "~> 1.3")
-  s.add_development_dependency("minitest-reporters", "~> 1.0")
+  s.add_development_dependency("rspec")
+  s.add_development_dependency("factory_girl")
+  s.add_development_dependency("pry-debugger")
 end
 
