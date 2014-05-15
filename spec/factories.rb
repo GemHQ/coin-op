@@ -19,4 +19,7 @@ FactoryGirl.define do
     initialize_with { new(attributes) }
   end
 
+  factory :native_transaction, class: Bitcoin::Protocol::Tx do
+    initialize_with { new(attributes) }
+  end
 end
