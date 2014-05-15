@@ -6,7 +6,7 @@ module CoinOp::Bit
 
     attr_reader :native
 
-    def initialize(options)
+    def initialize(options = {})
       # literals
       if options.is_a? String
         @blob = Bitcoin::Script.binary_from_string options
