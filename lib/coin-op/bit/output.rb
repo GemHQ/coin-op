@@ -10,7 +10,7 @@ module CoinOp::Bit
     # Takes a Hash with required keys:
     #
     # * either :transaction (an instance of Transaction)
-    #   or :transaction_hash (the base58-encoded hash of a Bitcoin transaction)
+    #   or :transaction_hash (the hex-encoded hash of a Bitcoin transaction)
     # * :index
     # * :script
     #
@@ -21,9 +21,7 @@ module CoinOp::Bit
     # 
     def initialize(options)
       if options[:transaction_hash]
-        @transaction_hash = decode_base58(options[:transaction_hash])
-      elsif options[:transaction_hex]
-        @transaction_hash = decode_hex(options[:transaction_hex])
+        @transaction_hash = options[:transaction_hash]
       elsif options[:transaction]
         @transaction = options[:transaction]
       end
@@ -52,7 +50,7 @@ module CoinOp::Bit
 
     def transaction_hash
       if @transaction
-        @transaction.binary_hash
+        @transaction.hex_hash
       elsif @transaction_hash
         @transaction_hash
       else
@@ -63,7 +61,7 @@ module CoinOp::Bit
 
     def to_hash
       {
-        :transaction_hash => base58(self.transaction_hash),
+        :transaction_hash => self.transaction_hash,
         :index => self.index,
         :value => self.value,
         :script => self.script,

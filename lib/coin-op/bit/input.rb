@@ -6,7 +6,9 @@ module CoinOp::Bit
 
     def initialize(binary_hash, index)
       @output = {
-        :transaction_hash => base58(binary_hash),
+        # the binary hash is the result of 
+        # [tx.hash].pack("H*").reverse
+        :transaction_hash => hex(binary_hash.reverse),
         :index => index,
       }
     end
@@ -26,8 +28,6 @@ module CoinOp::Bit
     attr_reader :native, :output, :binary_sig_hash,
       :signatures, :sig_hash, :script_sig
 
-    # TODO: change init args to be a single options Hash, as with Output.
-    #def initialize(output, options={})
     def initialize(options={})
       @transaction, @index, @output =
         options.values_at :transaction, :index, :output
@@ -37,7 +37,6 @@ module CoinOp::Bit
       end
 
       @native = Bitcoin::Protocol::TxIn.new
-      #@output = output
 
       @native.prev_out = @output.transaction_hash
       @native.prev_out_index = @output.index

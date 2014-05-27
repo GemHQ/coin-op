@@ -2,7 +2,7 @@ require "money-tree"
 require "bitcoin"
 
 module CoinOp::Bit
-
+  include CoinOp::Encodings
 
   class MultiWallet
 

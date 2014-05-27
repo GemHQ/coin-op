@@ -23,11 +23,11 @@ describe "Transaction" do
       assert_empty transaction.outputs
     end
 
-    it "has binary and base58 hash values" do
+    it "has binary and hex hash values" do
       refute_empty transaction.binary_hash
       assert_kind_of String, transaction.binary_hash
-      refute_empty transaction.base58_hash
-      assert_kind_of String, transaction.base58_hash
+      refute_empty transaction.hex_hash
+      assert_kind_of String, transaction.hex_hash
     end
 
     it "fails validation" do
@@ -79,10 +79,10 @@ describe "Transaction" do
       @transaction ||= Transaction.native(disbursal_tx)
     end
 
-    it "has binary and base58 hash values" do
+    it "has binary and hex hash values" do
       assert_equal disbursal_tx.binary_hash, transaction.binary_hash
-      refute_empty transaction.base58_hash
-      assert_kind_of String, transaction.base58_hash
+      refute_empty transaction.hex_hash
+      assert_kind_of String, transaction.hex_hash
     end
 
     describe "inputs" do
@@ -135,7 +135,7 @@ describe "Transaction" do
 
       def modified
         transaction = Transaction.new
-        @starting_hash = transaction.base58_hash
+        @starting_hash = transaction.hex_hash
         transaction.add_input input
         transaction
       end
@@ -150,7 +150,7 @@ describe "Transaction" do
       it "modifies the hash" do
         transaction = modified
         transaction.add_input input
-        refute_equal @starting_hash, transaction.base58_hash
+        refute_equal @starting_hash, transaction.hex_hash
       end
 
       it "computes a sig_hash for the input" do
@@ -173,7 +173,7 @@ describe "Transaction" do
 
       def modified
         transaction = Transaction.new
-        @starting_hash = transaction.base58_hash
+        @starting_hash = transaction.hex_hash
         transaction.add_output output
         transaction
       end
@@ -194,7 +194,7 @@ describe "Transaction" do
 
       it "modifies the hash" do
         transaction = modified
-        refute_equal @starting_hash, transaction.base58_hash
+        refute_equal @starting_hash, transaction.hex_hash
       end
 
 

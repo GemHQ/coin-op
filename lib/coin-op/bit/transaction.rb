@@ -43,7 +43,7 @@ module CoinOp::Bit
     end
 
     def self.hex(hex)
-      self.raw decode_hex hex
+      self.raw decode_hex(hex)
     end
 
     def self.data(hash)
@@ -158,8 +158,9 @@ module CoinOp::Bit
       @native.binary_hash
     end
 
-    def base58_hash
-      base58(self.binary_hash)
+    def hex_hash
+      update_native
+      @native.hash
     end
 
     def version
@@ -178,7 +179,7 @@ module CoinOp::Bit
       {
         :version => self.version,
         :lock_time => self.lock_time,
-        :hash => base58(self.binary_hash),
+        :hash => self.hex_hash,
         :inputs => self.inputs,
         :outputs => self.outputs,
       }
