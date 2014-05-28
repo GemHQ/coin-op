@@ -142,6 +142,7 @@ module CoinOp::Bit
         path = input.output.metadata[:wallet_path]
         node = self.path(path)
         sig_hash = transaction.sig_hash(input, node.script)
+        pp :sig_hash => hex(sig_hash)
         node.signatures(sig_hash)
       end
     end

@@ -106,10 +106,12 @@ module CoinOp::Bit
       valid = true
       @inputs.each_with_index do |input, index|
         # TODO: confirm whether we need to mess with the block_timestamp arg
+
         unless self.native.verify_input_signature(index, input.output.transaction.native)
           valid = false
           bad_inputs << index
         end
+
       end
       {:valid => valid, :inputs => bad_inputs}
     end
@@ -192,7 +194,7 @@ module CoinOp::Bit
       prev_out = input.output
       script ||= prev_out.script
 
-      @native.signature_hash_for_input(prev_out.index, nil, script.to_blob)
+      @native.signature_hash_for_input(input.index, nil, script.to_blob)
     end
 
     def set_script_sigs(*input_args, &block)

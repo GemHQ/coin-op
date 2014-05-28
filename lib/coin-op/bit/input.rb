@@ -26,7 +26,7 @@ module CoinOp::Bit
     include CoinOp::Encodings
 
     attr_reader :native, :output, :binary_sig_hash,
-      :signatures, :sig_hash, :script_sig
+      :signatures, :sig_hash, :script_sig, :index
 
     def initialize(options={})
       @transaction, @index, @output =
@@ -38,7 +38,7 @@ module CoinOp::Bit
 
       @native = Bitcoin::Protocol::TxIn.new
 
-      @native.prev_out = @output.transaction_hash
+      @native.prev_out = decode_hex(@output.transaction_hash).reverse
       @native.prev_out_index = @output.index
 
       @signatures = []
