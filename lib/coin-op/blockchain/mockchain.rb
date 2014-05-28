@@ -14,7 +14,9 @@ Bitcoin::NETWORKS[:mockchain] = {
   :proof_of_work_limit => 553713663,
   :alert_pubkeys => [],
   :known_nodes => [],
-  :checkpoints => {}
+  :checkpoints => {},
+  :min_tx_fee => 10_000,
+  :min_relay_tx_fee => 10_000,
 }
 
 Bitcoin.network = :mockchain
