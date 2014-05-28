@@ -47,8 +47,8 @@ module CoinOp::Bit
     end
 
     def self.data(hash)
-      version, lock_time, hash, inputs, outputs = 
-        hash.values_at :version, :lock_time, :hash, :inputs, :outputs
+      version, lock_time, tx_hash, inputs, outputs = 
+        hash.values_at :version, :lock_time, :tx_hash, :inputs, :outputs
 
       transaction = self.new
 

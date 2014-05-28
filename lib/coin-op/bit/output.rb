@@ -20,10 +20,10 @@ module CoinOp::Bit
     # * :metadata
     # 
     def initialize(options)
-      if options[:transaction_hash]
-        @transaction_hash = options[:transaction_hash]
-      elsif options[:transaction]
+      if options[:transaction]
         @transaction = options[:transaction]
+      elsif options[:transaction_hash]
+        @transaction_hash = options[:transaction_hash]
       end
 
       # FIXME: be aware of string bitcoin values versus
