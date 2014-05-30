@@ -2,6 +2,7 @@ project_root = File.expand_path(File.dirname(__FILE__))
 $LOAD_PATH.unshift "#{project_root}/../starter/lib"
 
 require "starter/tasks/gems"
+require "starter/tasks/gems/release"
 require "starter/tasks/git"
 require "starter/markdown/extender"
 
