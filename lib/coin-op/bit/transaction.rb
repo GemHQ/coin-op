@@ -43,7 +43,7 @@ module CoinOp::Bit
     end
 
     def self.hex(hex)
-      self.raw decode_hex(hex)
+      self.raw CoinOp::Encodings.decode_hex(hex)
     end
 
     def self.data(hash)
@@ -171,6 +171,11 @@ module CoinOp::Bit
 
     def lock_time
       @native.lock_time
+    end
+
+    def to_hex
+      payload = self.native.to_payload
+      CoinOp::Encodings.hex(payload)
     end
 
     def to_json(*a)

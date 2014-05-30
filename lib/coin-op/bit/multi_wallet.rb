@@ -2,9 +2,9 @@ require "money-tree"
 require "bitcoin"
 
 module CoinOp::Bit
-  include CoinOp::Encodings
 
   class MultiWallet
+    include CoinOp::Encodings
 
     def self.generate(names, network=:bitcoin_testnet)
       masters = {}
@@ -77,10 +77,23 @@ module CoinOp::Bit
       end
     end
 
-    def private_address(name)
-      raise "No such node: ''" unless (node = @private_trees[name.to_sym])
+    def private_seed(name)
+      raise "No such node: '#{name}'" unless (node = @private_trees[name.to_sym])
       node.to_serialized_address(:private)
     end
+
+    alias_method :private_address, :private_seed
+
+    def public_seed(name)
+      name = name.to_sym
+      if node = (@public_trees[name] || @private_trees[name])
+        node.to_serialized_address
+      else
+        raise "No such node: '#{name}'"
+      end
+    end
+
+    alias_method :public_address, :public_seed
 
     def private_addresses
       out = {}
@@ -142,7 +155,6 @@ module CoinOp::Bit
         path = input.output.metadata[:wallet_path]
         node = self.path(path)
         sig_hash = transaction.sig_hash(input, node.script)
-        pp :sig_hash => hex(sig_hash)
         node.signatures(sig_hash)
       end
     end
@@ -186,6 +198,7 @@ module CoinOp::Bit
   end
 
   class MultiNode
+    include CoinOp::Encodings
 
     attr_reader :path, :keys, :public_keys
     def initialize(options)
