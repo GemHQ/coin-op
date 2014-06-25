@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = "coin-op"
-  s.version = "0.1.0"
+  s.version = "0.2.0"
   s.license = "MIT"
   s.authors = [
     "Matthew King"
