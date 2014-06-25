@@ -163,6 +163,13 @@ module CoinOp::Bit
       end
     end
 
+    def set_sig_hashes(transaction)
+      transaction.inputs.each do |input|
+        path = input.output.metadata[:wallet_path]
+        node = self.path(path)
+        input.binary_sig_hash = transaction.sig_hash(input, node.script)
+      end
+    end
 
     # Takes a Transaction and any number of Arrays of signature dictionaries.
     # Each sig_dict in an Array corresponds to the Input with the same index.

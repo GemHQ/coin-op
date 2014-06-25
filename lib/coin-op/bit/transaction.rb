@@ -87,11 +87,6 @@ module CoinOp::Bit
         input.instance_eval do
           @native = native
         end
-        # FIXME:  this is incorrect behavior when dealing with P2SH,
-        # and possibly in other cases.
-        if input.is_a? Input
-          input.binary_sig_hash = self.sig_hash(input)
-        end
         # TODO: is this re-nativization necessary for outputs, too?
       end
     end

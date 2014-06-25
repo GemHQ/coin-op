@@ -46,7 +46,7 @@ module CoinOp::Bit
 
     def binary_sig_hash=(blob)
       @binary_sig_hash = blob
-      @sig_hash = base58(blob)
+      @sig_hash = hex(blob)
     end
 
     def script_sig=(blob)
@@ -59,7 +59,7 @@ module CoinOp::Bit
     def to_json(*a)
       {
         :output => self.output,
-        :signatures => self.signatures.map {|b| base58(b) },
+        :signatures => self.signatures.map {|b| hex(b) },
         :sig_hash => self.sig_hash || "",
         :script_sig => self.script_sig || ""
       }.to_json(*a)
