@@ -24,6 +24,7 @@ module CoinOp::Bit
       @trees = {}
       private_trees = options[:private]
 
+      # FIXME: we should allow this.
       if !private_trees
         raise "Must supply :private"
       end
@@ -38,6 +39,17 @@ module CoinOp::Bit
           name = name.to_sym
           @public_trees[name] = @trees[name] = self.get_node(arg)
         end
+      end
+    end
+
+    def get_node(arg)
+      case arg
+      when MoneyTree::Node
+        arg
+      when String
+        MoneyTree::Node.from_serialized_address(arg)
+      else
+        raise "Unusable type: #{node.class}"
       end
     end
 
@@ -93,9 +105,8 @@ module CoinOp::Bit
       end
     end
 
-    alias_method :public_address, :public_seed
 
-    def private_addresses
+    def private_seeds
       out = {}
       @private_trees.each do |name, tree|
         out[name] = self.private_address(name)
@@ -103,7 +114,7 @@ module CoinOp::Bit
       out
     end
 
-    def public_addresses
+    def public_seeds
       out = {}
       @private_trees.each do |name, node|
         out[name] = node.to_serialized_address
@@ -111,16 +122,9 @@ module CoinOp::Bit
       out
     end
 
-    def get_node(arg)
-      case arg
-      when MoneyTree::Node
-        arg
-      when String
-        MoneyTree::Node.from_serialized_address(arg)
-      else
-        raise "Unusable type: #{node.class}"
-      end
-    end
+    alias_method :public_address, :public_seed
+    alias_method :private_addresses, :private_seeds
+    alias_method :public_addresses, :public_seeds
 
     def path(path)
       options = {
@@ -200,11 +204,8 @@ module CoinOp::Bit
   class MultiNode
     include CoinOp::Encodings
 
-    attr_reader :path, :keys, :public_keys
+    attr_reader :path, :private, :public, :keys, :public_keys
     def initialize(options)
-      # m of n 
-      # TODO: take @m from the options
-      @m = 2
       @path = options[:path]
 
       @keys = {}
@@ -222,14 +223,17 @@ module CoinOp::Bit
       end
     end
 
-    def script
+    def script(m=2)
+      # m of n 
       keys = @public_keys.sort_by {|name, key| name }.map {|name, key| key.pub }
-      Script.new(:public_keys => keys, :needed => @m)
+      Script.new(:public_keys => keys, :needed => m)
     end
 
-    def p2sh_address
+    def address
       self.script.p2sh_address
     end
+
+    alias_method :p2sh_address, :address
 
     def p2sh_script
       Script.new(:address => self.script.p2sh_address)

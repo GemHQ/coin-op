@@ -24,7 +24,7 @@ module CoinOp
       #
       def self.decrypt(passphrase, hash)
         salt, nonce, ciphertext =
-          hash.values_at(:salt, :nonce, :ciphertext).map {|s| decode_base58(s) }
+          hash.values_at(:salt, :nonce, :ciphertext).map {|s| decode_hex(s) }
         box = self.new(passphrase, salt, hash[:iterations])
         box.decrypt(nonce, ciphertext)
       end
@@ -53,10 +53,10 @@ module CoinOp
         nonce = RbNaCl::Random.random_bytes(RbNaCl::SecretBox.nonce_bytes)
         ciphertext = @box.encrypt(nonce, plaintext)
         {
-          :salt => base58(@salt),
+          :salt => hex(@salt),
           :iterations => @iterations,
-          :nonce => base58(nonce),
-          :ciphertext => base58(ciphertext)
+          :nonce => hex(nonce),
+          :ciphertext => hex(ciphertext)
         }
       end
 
