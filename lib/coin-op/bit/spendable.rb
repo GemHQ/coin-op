@@ -1,6 +1,9 @@
 module CoinOp::Bit
   module Spendable
 
+    class InsufficientFunds < RuntimeError
+    end
+
     def network
       raise "implement #network in your class"
     end
