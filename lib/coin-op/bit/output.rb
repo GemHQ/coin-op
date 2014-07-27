@@ -5,7 +5,8 @@ module CoinOp::Bit
     include CoinOp::Encodings
 
     attr_accessor :metadata
-    attr_reader :native, :transaction, :index, :value, :script, :address
+    attr_reader :native, :transaction, :index, :value,
+      :script, :address
 
     # Takes a Hash with required keys:
     #
@@ -28,19 +29,24 @@ module CoinOp::Bit
 
       # FIXME: be aware of string bitcoin values versus
       # integer satoshi values
-      @index, @value, @address = options.values_at :index, :value, :address
+      @index, @value, @address, confirmations =
+        options.values_at :index, :value, :address, :confirmations
+
       @metadata = options[:metadata] || {}
+      @metadata[:confirmations] ||= confirmations
 
       if options[:script]
         @script = Script.new(options[:script])
-      else
-        raise ArgumentError, "No script supplied"
       end
 
       @native = Bitcoin::Protocol::TxOut.from_hash(
         "value" => @value.to_s,
         "scriptPubKey" => @script.to_s
       )
+    end
+
+    def confirmations
+      @metadata[:confirmations]
     end
 
     def set_transaction(transaction, index)
