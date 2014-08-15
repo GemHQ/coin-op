@@ -43,12 +43,12 @@ module CoinOp::Bit
     end
 
     def self.hex(hex)
-      self.raw CoinOp::Encodings.decode_hex(hex)
+      self.from_bytes CoinOp::Encodings.decode_hex(hex)
     end
 
-    def self.data(hash)
-      version, lock_time, tx_hash, inputs, outputs = 
-        hash.values_at :version, :lock_time, :tx_hash, :inputs, :outputs
+    def self.data(data)
+      version, lock_time, inputs, outputs = 
+        data.values_at :version, :lock_time, :inputs, :outputs
 
       transaction = self.new
 
@@ -59,7 +59,7 @@ module CoinOp::Bit
       #FIXME: we're not handling sig_scripts for already signed inputs.
 
       inputs.each_with_index do |data, index|
-        transaction.add_input data[:output]
+        transaction.add_input(data)
 
         ## FIXME: verify that the supplied and computed sig_hashes match
         #puts :sig_hashes_match => (data[:sig_hash] == input.sig_hash)
@@ -67,6 +67,16 @@ module CoinOp::Bit
 
       transaction
     end
+
+    # Preparation for interface change.  This nasty little construct
+    # allows us to work on the class's metaclass.
+    class << self
+      alias_method :from_data, :data
+      alias_method :from_hex, :hex
+      alias_method :from_bytes, :raw
+      alias_method :from_native, :native
+    end
+
 
     attr_reader :native, :inputs, :outputs
 
@@ -119,16 +129,14 @@ module CoinOp::Bit
     # * an instance of Output
     # * a Hash describing an Output
     #
-    def add_input(arg)
+    def add_input(input)
       # TODO: allow specifying prev_tx and index with a Hash.
       # Possibly stop using SparseInput.
-      if arg.is_a? Input
-        input = arg
-      else
-        input = Input.new(
+
+      unless input.is_a?(Input)
+        input = Input.new input.merge(
           :transaction => self,
           :index => @inputs.size,
-          :output => arg
         )
       end
 

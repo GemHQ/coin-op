@@ -37,7 +37,10 @@ module CoinOp::Bit
 
       if options[:script]
         @script = Script.new(options[:script])
+      elsif @address
+        @script = Script.new(:address => @address)
       end
+
 
       @native = Bitcoin::Protocol::TxOut.from_hash(
         "value" => @value.to_s,

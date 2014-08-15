@@ -32,6 +32,8 @@ module CoinOp::Bit
       @transaction, @index, @output =
         options.values_at :transaction, :index, :output
 
+      script_sig_asm = options[:script_sig_asm]
+
       unless @output.is_a? Output
         @output = Output.new(@output)
       end
@@ -41,6 +43,9 @@ module CoinOp::Bit
       @native.prev_out = decode_hex(@output.transaction_hash).reverse
       @native.prev_out_index = @output.index
 
+      if script_sig_asm
+        self.script_sig = Bitcoin::Script.binary_from_string(script_sig_asm)
+      end
       @signatures = []
     end
 
