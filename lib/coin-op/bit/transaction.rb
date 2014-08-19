@@ -1,4 +1,3 @@
-
 module CoinOp::Bit
 
   class Transaction
@@ -33,7 +32,7 @@ module CoinOp::Bit
 
       report = transaction.validate_syntax
       unless report[:valid] == true
-        raise "Invalid syntax:  #{report[:errors].to_json}"
+        raise "Invalid syntax:  #{report[:error].to_json}"
       end
       transaction
     end
@@ -100,6 +99,10 @@ module CoinOp::Bit
         # TODO: is this re-nativization necessary for outputs, too?
       end
     end
+
+    # Monkeypatched, because bitcoin-ruby thinks a transaction doesn't
+    # have valid syntax when it contains a coinbase input.
+    Bitcoin::Validation::Tx::RULES[:syntax].delete(:inputs)
 
     def validate_syntax
       update_native
