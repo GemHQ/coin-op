@@ -240,6 +240,23 @@ module CoinOp::Bit
       total
     end
 
+    def input_value
+      inputs.inject(0) { |sum, input| sum += input.value }
+    end
+
+    def value_for(addresses)
+      output_value_for(addresses) - input_value_for(addresses)
+    end
+
+    def input_value_for(addresses)
+      own = inputs.select { |input| addresses.include?(input.output.address) }
+      own.inject(0) { |sum, input| input.output.value }
+    end
+
+    def output_value_for(addresses)
+      own = outputs.select { |output| addresses.include?(output.address) }
+      own.inject(0) { |sum, output| output.value }
+    end
 
   end
 

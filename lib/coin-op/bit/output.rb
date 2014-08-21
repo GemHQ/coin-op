@@ -48,7 +48,9 @@ module CoinOp::Bit
     end
 
     def address
-      @address || @script.address
+      if @script
+        @script.address
+      end
     end
 
     def confirmations

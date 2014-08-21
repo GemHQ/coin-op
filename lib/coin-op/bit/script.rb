@@ -7,7 +7,8 @@ module CoinOp::Bit
     attr_reader :native
 
     def initialize(options)
-      @network = Bitcoin::NETWORKS[options[:network] || :testnet3]
+      network_name = (options[:network] || :testnet3) rescue :testnet3
+      @network = Bitcoin::NETWORKS[network_name]
 
       # literals
       if options.is_a? String
