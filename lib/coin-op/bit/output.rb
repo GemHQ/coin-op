@@ -5,8 +5,7 @@ module CoinOp::Bit
     include CoinOp::Encodings
 
     attr_accessor :metadata
-    attr_reader :native, :transaction, :index, :value,
-      :script, :address
+    attr_reader :native, :transaction, :index, :value, :script
 
     # Takes a Hash with required keys:
     #
@@ -46,6 +45,10 @@ module CoinOp::Bit
         "value" => @value.to_s,
         "scriptPubKey" => @script.to_s
       )
+    end
+
+    def address
+      @address || @script.address
     end
 
     def confirmations

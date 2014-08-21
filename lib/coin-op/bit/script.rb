@@ -7,6 +7,8 @@ module CoinOp::Bit
     attr_reader :native
 
     def initialize(options)
+      @network = Bitcoin::NETWORKS[options[:network] || :testnet3]
+
       # literals
       if options.is_a? String
         @blob = Bitcoin::Script.binary_from_string options
@@ -34,6 +36,10 @@ module CoinOp::Bit
       @hex = hex(@blob)
       @native = Bitcoin::Script.new @blob
       @string = @native.to_string
+    end
+
+    def address
+      Bitcoin.encode_address(@native.get_hash160, @network[:p2sh_version])
     end
 
     def to_s
