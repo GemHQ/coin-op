@@ -46,10 +46,13 @@ module CoinOp::Bit
     end
 
     def self.data(data)
-      version, lock_time, inputs, outputs = 
-        data.values_at :version, :lock_time, :inputs, :outputs
+      version, lock_time, inputs, outputs, confirmations = 
+        data.values_at :version, :lock_time, :inputs, :outputs, :confirmations
 
-      transaction = self.new
+      transaction = self.new(
+        :version => version, :lock_time => lock_time,
+        :confirmations => confirmations
+      )
 
       outputs.each do |data|
         transaction.add_output Output.new(data)
@@ -77,12 +80,13 @@ module CoinOp::Bit
     end
 
 
-    attr_reader :native, :inputs, :outputs
+    attr_reader :native, :inputs, :outputs, :confirmations
 
-    def initialize
+    def initialize(options={})
       @native = native || Bitcoin::Protocol::Tx.new
       @inputs = []
       @outputs = []
+      @confirmations = options[:confirmations]
     end
 
     def update_native
