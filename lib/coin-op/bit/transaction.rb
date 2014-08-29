@@ -245,7 +245,7 @@ module CoinOp::Bit
     end
 
     def input_value
-      inputs.inject(0) { |sum, input| sum += input.value }
+      inputs.inject(0) { |sum, input| sum += input.output.value }
     end
 
     def value_for(addresses)

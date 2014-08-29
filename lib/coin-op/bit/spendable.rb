@@ -56,7 +56,7 @@ module CoinOp::Bit
       unspent = self.select_unspent(transaction.output_value)
 
       unspent.each do |output|
-        transaction.add_input output
+        transaction.add_input :output => output
       end
 
       input_amount = unspent.inject(0) {|sum, output| sum += output.value }
