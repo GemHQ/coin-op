@@ -35,7 +35,7 @@ module CoinOp::Bit
     def fee_for_bytes(bytes)
       # round up
       size = (bytes / 1000) + 1
-      Bitcoin::NETWORKS[:testnet3][:min_tx_fee] * size
+      Bitcoin.network[:min_tx_fee] * size
     end
 
     # From http://bitcoinfees.com.  May not be applicable for

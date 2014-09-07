@@ -41,7 +41,7 @@ module CoinOp::Bit
     def unlock(outputs)
     end
 
-    def create_transaction(outputs, change_address)
+    def create_transaction(outputs, change_address, fee_amount=nil)
 
       transaction = CoinOp::Bit::Transaction.build do |t|
         outputs.each do |output|
@@ -60,7 +60,7 @@ module CoinOp::Bit
       end
 
       input_amount = unspent.inject(0) {|sum, output| sum += output.value }
-      fee = transaction.suggested_fee
+      fee = fee_amount || transaction.suggested_fee
 
       # FIXME: there's likely another unspent output we can add, but the present
       # implementation of all this can't easily help us.  Possibly stop
@@ -86,3 +86,4 @@ module CoinOp::Bit
 
   end
 end
+

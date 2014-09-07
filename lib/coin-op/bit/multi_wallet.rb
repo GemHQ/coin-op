@@ -6,7 +6,15 @@ module CoinOp::Bit
   class MultiWallet
     include CoinOp::Encodings
 
-    def self.generate(names, network=:bitcoin_testnet)
+    NetworkMap = {
+      :testnet3 => :bitcoin_testnet,
+      :bitcoin => :bitcoin
+    }
+
+    def self.generate(names, network_name=:testnet3)
+      unless network = NetworkMap[network_name]
+        raise ArgumentError, "Unknown network #{network_name}"
+      end
       masters = {}
       names.each do |name|
         name = name.to_sym
@@ -18,7 +26,6 @@ module CoinOp::Bit
     attr_reader :trees
 
     def initialize(options)
-      # FIXME: must accept option for which network to use.
       @private_trees = {}
       @public_trees = {}
       @trees = {}
@@ -140,6 +147,10 @@ module CoinOp::Bit
       end
 
       MultiNode.new(options)
+    end
+
+    def address(path)
+      path(path).address
     end
 
     def valid_output?(output)
