@@ -1,4 +1,13 @@
 require "bitcoin"
+
+# bitcoin-ruby is not multi-network friendly.  It's also a hassle
+# to tell what network you're using if you don't already know.
+# This makes it a bit easier.
+Bitcoin::NETWORKS.each do |name, definition|
+  definition[:name] = name
+end
+
+
 require "money-tree"
 
 # establish the namespace
