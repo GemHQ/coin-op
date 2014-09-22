@@ -86,6 +86,7 @@ module CoinOp::Bit
       @native = native || Bitcoin::Protocol::Tx.new
       @inputs = []
       @outputs = []
+      @fee = options[:fee]
       @confirmations = options[:confirmations]
     end
 
@@ -228,6 +229,9 @@ module CoinOp::Bit
       end
     end
 
+    def fee
+      @fee || self.suggested_fee
+    end
 
     def suggested_fee
       @native.minimum_block_fee
@@ -260,6 +264,18 @@ module CoinOp::Bit
     def output_value_for(addresses)
       own = outputs.select { |output| addresses.include?(output.address) }
       own.inject(0) { |sum, output| output.value }
+    end
+
+    def change_value
+      input_value - (output_value + fee)
+    end
+
+    def add_change(address, metadata={})
+      add_output(
+        :value => change_value,
+        :address => address,
+        :metadata => {:memo => "change"}.merge(metadata)
+      )
     end
 
   end
