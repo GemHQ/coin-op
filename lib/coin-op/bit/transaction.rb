@@ -46,10 +46,11 @@ module CoinOp::Bit
     end
 
     def self.data(data)
-      version, lock_time, inputs, outputs, confirmations = 
-        data.values_at :version, :lock_time, :inputs, :outputs, :confirmations
+      version, lock_time, fee, inputs, outputs, confirmations = 
+        data.values_at :version, :lock_time, :fee, :inputs, :outputs, :confirmations
 
       transaction = self.new(
+        :fee => fee,
         :version => version, :lock_time => lock_time,
         :confirmations => confirmations
       )
@@ -60,11 +61,13 @@ module CoinOp::Bit
 
       #FIXME: we're not handling sig_scripts for already signed inputs.
 
-      inputs.each_with_index do |data, index|
-        transaction.add_input(data)
+      if inputs
+        inputs.each_with_index do |data, index|
+          transaction.add_input(data)
 
-        ## FIXME: verify that the supplied and computed sig_hashes match
-        #puts :sig_hashes_match => (data[:sig_hash] == input.sig_hash)
+          ## FIXME: verify that the supplied and computed sig_hashes match
+          #puts :sig_hashes_match => (data[:sig_hash] == input.sig_hash)
+        end
       end
 
       transaction
@@ -86,7 +89,7 @@ module CoinOp::Bit
       @native = native || Bitcoin::Protocol::Tx.new
       @inputs = []
       @outputs = []
-      @fee = options[:fee]
+      @desired_fee = options[:fee]
       @confirmations = options[:confirmations]
     end
 
@@ -200,6 +203,7 @@ module CoinOp::Bit
         :version => self.version,
         :lock_time => self.lock_time,
         :hash => self.hex_hash,
+        :fee => self.fee,
         :inputs => self.inputs,
         :outputs => self.outputs,
       }
@@ -229,14 +233,13 @@ module CoinOp::Bit
       end
     end
 
+    def desired_fee
+      @desired_fee || @native.minimum_block_fee
+    end
+
     def fee
-      @fee || self.suggested_fee
+      input_value - output_value
     end
-
-    def suggested_fee
-      @native.minimum_block_fee
-    end
-
 
     # Total value being spent
     def output_value
@@ -246,6 +249,10 @@ module CoinOp::Bit
       end
 
       total
+    end
+
+    def funded?
+      input_value > (output_value + desired_fee)
     end
 
     def input_value
@@ -267,7 +274,7 @@ module CoinOp::Bit
     end
 
     def change_value
-      input_value - (output_value + fee)
+      input_value - (output_value + desired_fee)
     end
 
     def add_change(address, metadata={})

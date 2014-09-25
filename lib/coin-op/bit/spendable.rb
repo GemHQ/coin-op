@@ -43,11 +43,10 @@ module CoinOp::Bit
 
     def create_transaction(outputs, change_address, fee_amount=nil)
 
-      transaction = CoinOp::Bit::Transaction.build do |t|
-        outputs.each do |output|
-          t.add_output(output)
-        end
-      end
+      transaction = CoinOp::Bit::Transaction.from_data(
+        :fee => fee_amount,
+        :outputs => outputs
+      )
 
       if self.balance < transaction.output_value
         raise InsufficientFunds
@@ -60,25 +59,16 @@ module CoinOp::Bit
       end
 
       input_amount = unspent.inject(0) {|sum, output| sum += output.value }
-      fee = fee_amount || transaction.suggested_fee
 
       # FIXME: there's likely another unspent output we can add, but the present
       # implementation of all this can't easily help us.  Possibly stop
       # using select_unspent(value) and start using a while loop that shifts
       # outputs off the array.  Then we can start the process over.
-      if input_amount < (transaction.output_value + transaction.suggested_fee)
+      unless transaction.funded?
         raise InsufficientFunds
       end
 
-      change = input_amount - (transaction.output_value + fee)
-
-      transaction.add_output(
-        :value => change,
-        :script => {
-          :address => change_address
-        },
-        :address => change_address,
-      )
+      transaction.add_change change_address
 
       self.authorize(transaction)
       transaction
