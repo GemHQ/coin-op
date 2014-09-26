@@ -1,5 +1,7 @@
 require_relative "../setup"
 
+Bitcoin.network = :testnet3
+
 require "term/ansicolor"
 String.send :include, Term::ANSIColor
 
