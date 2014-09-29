@@ -279,7 +279,7 @@ module CoinOp::Bit
     end
 
     def change_value
-      input_value - (output_value + desired_fee)
+      input_value - (output_value + fee_override)
     end
 
     def add_change(address, metadata={})

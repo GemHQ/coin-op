@@ -73,7 +73,7 @@ describe "Transaction" do
       assert_equal 8_333_000, @transaction.fee
 
       # But we did specify a fee override in the tx data
-      assert_equal 33_000, @transaction.desired_fee
+      assert_equal 33_000, @transaction.fee_override
 
       # So we can compute the correct change value
       assert_equal 8_300_000, @transaction.change_value
