@@ -3,10 +3,6 @@ require_relative "setup"
 Fee = CoinOp::Bit::Fee
 Output = CoinOp::Bit::Output
 
-def p2sh_script
-  "OP_DUP OP_HASH160 7b936f13a9a2f0f2c30520c5cb24bc76a148d696 OP_EQUALVERIFY OP_CHECKSIG"
-end
-
 describe "Bit::Fee" do
 
   specify "#priority" do
