@@ -27,6 +27,15 @@ describe "Output" do
     empty_transaction.add_output output
   end
 
+  it "can be created with an address" do
+    output = Output.new(:value => 22_000, :address => "2MuWs1hsyA1AkznLz1vFixEjbrZmetLrhF8")
+    assert_equal(
+      # The value in the middle is simply the hex version of the address
+      "OP_HASH160 18e565c292cf09360d8fc0a1fb477ad4b262e65c OP_EQUAL",
+      output.script.to_s
+    )
+  end
+
 end
 
 
