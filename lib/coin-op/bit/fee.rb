@@ -7,7 +7,9 @@ module CoinOp::Bit
     def estimate(unspents, payees)
       # https://en.bitcoin.it/wiki/Transaction_fees
 
+      # dupe because we'll need to add a change output
       payees = payees.dup
+
       unspent_total = unspents.inject(0) {|sum, output| sum += output.value}
       payee_total = payees.inject(0) {|sum, payee| sum += payee[:value]}
       nominal_change = unspent_total - payee_total
