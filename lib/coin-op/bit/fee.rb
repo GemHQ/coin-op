@@ -4,27 +4,29 @@ module CoinOp::Bit
 
     module_function
 
-    def estimate(unspents, payees)
+    def estimate(unspents, payees, tx_size=nil)
       # https://en.bitcoin.it/wiki/Transaction_fees
 
+      # dupe because we'll need to add a change output
       payees = payees.dup
+
       unspent_total = unspents.inject(0) {|sum, output| sum += output.value}
-      payee_total = payees.inject(0) {|sum, payee| sum += payee[:value]}
+      payee_total = payees.inject(0) {|sum, payee| sum += payee.value}
       nominal_change = unspent_total - payee_total
-      payees << {:value => nominal_change}
+      payees << Output.new(:value => nominal_change)
 
-      tx_size = estimate_tx_size(unspents.size, payees.size)
-      min = payees.min_by {|payee| payee[:value] }
+      tx_size ||= estimate_tx_size(unspents.size, payees.size)
+      min = payees.min_by {|payee| payee.value }
 
-      under_1k = tx_size < 1000
-      big_outputs = min[:value] > 1_000_000
+      small = tx_size < 1000
+      big_outputs = min.value > 1_000_000
 
       p = priority :size => tx_size, :unspents => (unspents.map do |output|
         {:value => output.value, :age => output.confirmations}
       end)
       high_priority = p > PRIORITY_THRESHOLD
 
-      if under_1k && big_outputs && high_priority
+      if small && big_outputs && high_priority
         0
       else
         fee_for_bytes(tx_size)

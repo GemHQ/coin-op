@@ -89,7 +89,7 @@ module CoinOp::Bit
       @native = native || Bitcoin::Protocol::Tx.new
       @inputs = []
       @outputs = []
-      @desired_fee = options[:fee]
+      @fee_override = options[:fee]
       @confirmations = options[:confirmations]
     end
 
@@ -233,12 +233,17 @@ module CoinOp::Bit
       end
     end
 
-    def desired_fee
-      @desired_fee || @native.minimum_block_fee
+    def fee_override
+      @fee_override || self.estimate_fee
+    end
+
+    def estimate_fee(tx_size=nil)
+      unspents = inputs.map(&:output)
+      Fee.estimate(unspents, outputs, tx_size)
     end
 
     def fee
-      input_value - output_value
+      input_value - output_value rescue nil
     end
 
     # Total value being spent
@@ -252,7 +257,7 @@ module CoinOp::Bit
     end
 
     def funded?
-      input_value > (output_value + desired_fee)
+      input_value > (output_value + fee_override)
     end
 
     def input_value
@@ -274,7 +279,7 @@ module CoinOp::Bit
     end
 
     def change_value
-      input_value - (output_value + desired_fee)
+      input_value - (output_value + fee_override)
     end
 
     def add_change(address, metadata={})

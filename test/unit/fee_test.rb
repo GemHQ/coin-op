@@ -3,10 +3,6 @@ require_relative "setup"
 Fee = CoinOp::Bit::Fee
 Output = CoinOp::Bit::Output
 
-def p2sh_script
-  "OP_DUP OP_HASH160 7b936f13a9a2f0f2c30520c5cb24bc76a148d696 OP_EQUALVERIFY OP_CHECKSIG"
-end
-
 describe "Bit::Fee" do
 
   specify "#priority" do
@@ -46,12 +42,23 @@ describe "Bit::Fee" do
 
   describe "#estimate" do
 
+    specify "has fee when unknown priority" do
+      unspents = [
+        Output.new(:value => 100_000_000)
+      ]
+      payees = [
+        Output.new(:value => 1_500_000)
+      ]
+      fee = Fee.estimate(unspents, payees)
+      assert_equal 10_000, fee
+    end
+
     specify "no fee when small tx size, large outputs, high priority" do
       unspents = [
         Output.new(:value => 100_000_000, :confirmations => 150)
       ]
       payees = [
-        {:value => 1_500_000}
+        Output.new(:value => 1_500_000)
       ]
       fee = Fee.estimate(unspents, payees)
       assert_equal 0, fee
@@ -62,7 +69,7 @@ describe "Bit::Fee" do
         Output.new(:value => 100_000_000, :confirmations => 2)
       ]
       payees = [
-        {:value => 1_500_000}
+        Output.new(:value => 1_500_000)
       ]
       fee = Fee.estimate(unspents, payees)
       assert_equal 10_000, fee
@@ -73,7 +80,7 @@ describe "Bit::Fee" do
         Output.new(:value => 100_000_000, :confirmations => 150)
       ]
       payees = [
-        {:value => 900_000}
+        Output.new(:value => 900_000)
       ]
       fee = Fee.estimate(unspents, payees)
       assert_equal 10_000, fee
@@ -90,7 +97,7 @@ describe "Bit::Fee" do
         Output.new(:value => 100_000_000, :confirmations => 150)
       ]
       payees = [
-        {:value => 1_500_000}
+        Output.new(:value => 1_500_000)
       ]
       fee = Fee.estimate(unspents, payees)
       assert_equal 20_000, fee
