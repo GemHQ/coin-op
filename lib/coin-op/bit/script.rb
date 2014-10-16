@@ -44,6 +44,8 @@ module CoinOp::Bit
       Bitcoin.encode_address(@native.get_hash160, @network[:p2sh_version])
     end
 
+    alias_method :p2sh_address, :address
+
     def to_s
       @string
     end
@@ -80,16 +82,13 @@ module CoinOp::Bit
       self.to_hash.to_json(*a)
     end
 
+    # hex value of the hash of this script.
     def hash160
       Bitcoin.hash160(@hex)
     end
 
     def p2sh_script
       self.class.new Bitcoin::Script.to_p2sh_script(self.hash160)
-    end
-
-    def p2sh_address
-      Bitcoin.hash160_to_p2sh_address(self.hash160)
     end
 
     def p2sh_sig(options)
