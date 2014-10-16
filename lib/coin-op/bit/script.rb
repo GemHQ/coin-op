@@ -109,12 +109,15 @@ module CoinOp::Bit
     end
 
     # Generate the script that uses a P2SH address.
-    # Used for an Output's scriptPubKey value.
+    # Used for an Output's scriptPubKey value.  Not much used, and
+    # can probably be removed, as I think it is equivalent to
+    # Script.new :address => some_p2sh_address
     def p2sh_script
       self.class.new Bitcoin::Script.to_p2sh_script(self.hash160)
     end
 
-    # Generate the P2SH address for this script.
+    # Generate the P2SH address for this script.  This is the value you
+    # would give to someone who wants to pay you.
     def p2sh_address
       Bitcoin.hash160_to_p2sh_address(self.hash160)
     end
