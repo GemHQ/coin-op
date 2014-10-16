@@ -3,12 +3,55 @@ module CoinOp::Bit
   class Transaction
     include CoinOp::Encodings
 
+    # Deprecated.  Easier to use Transaction.from_data
     def self.build(&block)
       transaction = self.new
       yield transaction
       transaction
     end
 
+    # Construct a Transaction from a data structure of nested Hashes
+    # and Arrays.
+    def self.data(data)
+      version, lock_time, fee, inputs, outputs, confirmations = 
+        data.values_at :version, :lock_time, :fee, :inputs, :outputs, :confirmations
+
+      transaction = self.new(
+        :fee => fee,
+        :version => version, :lock_time => lock_time,
+        :confirmations => confirmations
+      )
+
+      outputs.each do |data|
+        transaction.add_output Output.new(data)
+      end
+
+      #FIXME: we're not handling sig_scripts for already signed inputs.
+
+      if inputs
+        # TODO: use #each instead of #each_with_index
+        inputs.each_with_index do |data, index|
+          transaction.add_input(data)
+
+          ## FIXME: verify that the supplied and computed sig_hashes match
+          #puts :sig_hashes_match => (data[:sig_hash] == input.sig_hash)
+        end
+      end
+
+      transaction
+    end
+
+    # Construct a Transaction from raw bytes.
+    def self.raw(raw_tx)
+      self.native ::Bitcoin::Protocol::Tx.new(raw_tx)
+    end
+
+    # Construct a Transaction from a hex representation of the raw bytes.
+    def self.hex(hex)
+      self.from_bytes CoinOp::Encodings.decode_hex(hex)
+    end
+
+    # Construct a transaction from an instance of ::Bitcoin::Protocol::Tx
     def self.native(tx)
       transaction = self.new()
       # TODO: reconsider use of instance_eval
@@ -34,42 +77,6 @@ module CoinOp::Bit
       unless report[:valid] == true
         raise "Invalid syntax:  #{report[:error].to_json}"
       end
-      transaction
-    end
-
-    def self.raw(raw_tx)
-      self.native ::Bitcoin::Protocol::Tx.new(raw_tx)
-    end
-
-    def self.hex(hex)
-      self.from_bytes CoinOp::Encodings.decode_hex(hex)
-    end
-
-    def self.data(data)
-      version, lock_time, fee, inputs, outputs, confirmations = 
-        data.values_at :version, :lock_time, :fee, :inputs, :outputs, :confirmations
-
-      transaction = self.new(
-        :fee => fee,
-        :version => version, :lock_time => lock_time,
-        :confirmations => confirmations
-      )
-
-      outputs.each do |data|
-        transaction.add_output Output.new(data)
-      end
-
-      #FIXME: we're not handling sig_scripts for already signed inputs.
-
-      if inputs
-        inputs.each_with_index do |data, index|
-          transaction.add_input(data)
-
-          ## FIXME: verify that the supplied and computed sig_hashes match
-          #puts :sig_hashes_match => (data[:sig_hash] == input.sig_hash)
-        end
-      end
-
       transaction
     end
 
