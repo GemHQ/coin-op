@@ -93,7 +93,7 @@ module CoinOp::Bit
     attr_reader :native, :inputs, :outputs, :confirmations
 
     def initialize(options={})
-      @native = native || Bitcoin::Protocol::Tx.new
+      @native = Bitcoin::Protocol::Tx.new
       @inputs = []
       @outputs = []
       @fee_override = options[:fee]
