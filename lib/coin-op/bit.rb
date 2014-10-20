@@ -8,6 +8,7 @@ Bitcoin::NETWORKS.each do |name, definition|
 end
 
 
+# BIP 32 Hierarchical Deterministic Wallets
 require "money-tree"
 
 # establish the namespace

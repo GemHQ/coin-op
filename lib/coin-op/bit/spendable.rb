@@ -1,9 +1,21 @@
 module CoinOp::Bit
+
+  # A mixin to provide simple transaction preparation. Not currently
+  # used in any production code, so needs vetting.
+  #
+  # Requires the including class to define these methods:
+  #
+  # * network
+  # * balance
+  # * select_unspent
+  # * authorize
+  #
   module Spendable
 
     class InsufficientFunds < RuntimeError
     end
 
+    # Return the network name (must be one of the keys from Bitcoin.network)
     def network
       raise "implement #network in your class"
     end
@@ -12,33 +24,16 @@ module CoinOp::Bit
       raise "implement #balance in your class"
     end
 
-    def unspent
-      raise "implement #unspent in your class"
-    end
-
-    def select_unspent
+    # Takes a value in satoshis.
+    # Returns an array of spendable Outputs
+    def select_unspent(value)
       raise "implement #select_unspent in your class"
     end
 
-    def authorize
+    # Authorize the supplied transaction by setting its inputs' script_sigs
+    # to whatever values are appropriate.
+    def authorize(transaction)
       raise "implement #authorize in your class"
-    end
-
-    def blockchain
-      # FIXME: use the return value of #network as the arg, once this ticket
-      # is resolved: # https://github.com/BitVault/bitvault/issues/251
-      @blockchain ||= BitVaultAPI::Blockchain::Blockr.new(:test)
-    end
-
-    def lock(outputs)
-      # no op
-      # Mixing classes may wish to lock down these selected outputs
-      # so that concurrent payments or transfers cannot use them.
-      #
-      # When do we release unspents (if a user abandons a transaction)?
-    end
-
-    def unlock(outputs)
     end
 
     def create_transaction(outputs, change_address, fee_amount=nil)

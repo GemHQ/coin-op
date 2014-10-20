@@ -1,3 +1,5 @@
+# DEPRECATED
+#
 require "bitcoin"
 
 Bitcoin::NETWORKS[:mockchain] = {

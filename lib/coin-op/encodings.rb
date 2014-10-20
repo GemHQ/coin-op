@@ -2,6 +2,8 @@
 module CoinOp
 
   module Encodings
+    # Extending a module with itself allows it to be used as both a mixin
+    # and a bag of functions, e.g. CoinOp::Encodings.hex(string)
     extend self
 
     def hex(blob)
