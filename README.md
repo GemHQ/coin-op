@@ -12,7 +12,7 @@ require "coin-op"
 
 include CoinOp::Bit
 
-transaction = Transaction.data(
+transaction = Transaction.from_data(
   # Override the minimum suggested fee
   :fee => 20_000,
   :inputs => [
