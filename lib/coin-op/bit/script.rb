@@ -64,7 +64,7 @@ module CoinOp::Bit
     def address
       # Using encode_address directly allows us to avoid the globally set
       # network in ::Bitcoin
-      Bitcoin.encode_address(@native.get_hash160, @network[:p2sh_version])
+      Bitcoin.encode_address(self.hash160, @network[:p2sh_version])
     end
 
     alias_method :p2sh_address, :address
