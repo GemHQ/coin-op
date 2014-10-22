@@ -62,12 +62,8 @@ module CoinOp::Bit
     end
 
     def address
-      # Using encode_address directly allows us to avoid the globally set
-      # network in ::Bitcoin
-      Bitcoin.encode_address(self.hash160, @network[:p2sh_version])
+      Bitcoin.encode_address(@native.get_hash160, @network[:p2sh_version])
     end
-
-    alias_method :p2sh_address, :address
 
     def to_s
       @string
@@ -108,7 +104,6 @@ module CoinOp::Bit
       self.to_hash.to_json(*a)
     end
 
-    # hex value of the hash of this script.
     def hash160
       Bitcoin.hash160(@hex)
     end
@@ -119,6 +114,10 @@ module CoinOp::Bit
     # Script.new :address => some_p2sh_address
     def p2sh_script
       self.class.new Bitcoin::Script.to_p2sh_script(self.hash160)
+    end
+
+    def p2sh_address
+      Bitcoin.hash160_to_p2sh_address(self.hash160)
     end
 
     # Generate a P2SH script_sig for the current script, using the
