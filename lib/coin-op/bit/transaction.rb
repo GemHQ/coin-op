@@ -292,6 +292,7 @@ module CoinOp::Bit
     # Estimate the fee in satoshis for this transaction.  Takes an optional
     # tx_size argument because it is impossible to determine programmatically
     # the size of the scripts used to create P2SH outputs.
+    # Rough testing of the size of a 2of3 multisig p2sh input: 297
     def estimate_fee(tx_size=nil)
       unspents = inputs.map(&:output)
       Fee.estimate(unspents, outputs, tx_size)
