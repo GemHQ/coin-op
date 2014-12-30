@@ -13,7 +13,7 @@ module CoinOp::Bit
     # Construct a Transaction from a data structure of nested Hashes
     # and Arrays.
     def self.data(data)
-      version, lock_time, fee, inputs, outputs, confirmations = 
+      version, lock_time, fee, inputs, outputs, confirmations =
         data.values_at :version, :lock_time, :fee, :inputs, :outputs, :confirmations
 
       transaction = self.new(
@@ -317,7 +317,7 @@ module CoinOp::Bit
     # Are the currently selected inputs sufficient to cover the current
     # outputs and the desired fee?
     def funded?
-      input_value > (output_value + fee_override)
+      input_value >= (output_value + fee_override)
     end
 
     # Total value of all inputs.
