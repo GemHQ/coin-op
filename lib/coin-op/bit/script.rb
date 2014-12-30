@@ -44,6 +44,9 @@ module CoinOp::Bit
       # arguments for constructing
       else
         if address = options[:address]
+          unless Bitcoin::valid_address?(address)
+            raise ArgumentError, "Invalid address: #{address}"
+          end
           @blob = Bitcoin::Script.to_address_script(address)
         elsif public_key = options[:public_key]
           @blob = Bitcoin::Script.to_pubkey_script(public_key)

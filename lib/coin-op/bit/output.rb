@@ -19,7 +19,7 @@ module CoinOp::Bit
     # * either  :script (a value usable in Script.new)
     #   or      :address (a valid Bitcoin address)
     # * :metadata (a Hash with arbitrary contents)
-    # 
+    #
     def initialize(options)
       if options[:transaction]
         @transaction = options[:transaction]
