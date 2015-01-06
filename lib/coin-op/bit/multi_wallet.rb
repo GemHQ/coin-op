@@ -31,16 +31,17 @@ module CoinOp::Bit
       @public_trees = {}
       @trees = {}
       @network = NetworkMap[options.include? :network ? options[:network] : :testnet3]
-      private_trees = options[:private]
 
       # FIXME: we should allow this.
-      if !private_trees
-        raise "Must supply :private"
-      end
+      # if !private_trees
+      #   raise "Must supply :private"
+      # end
 
-      private_trees.each do |name, arg|
-        name = name.to_sym
-        @private_trees[name] = @trees[name] = self.get_node(arg)
+      if private_trees = options[:private]
+        private_trees.each do |name, arg|
+          name = name.to_sym
+          @private_trees[name] = @trees[name] = self.get_node(arg)
+        end
       end
 
       if public_trees = options[:public]
@@ -284,4 +285,3 @@ module CoinOp::Bit
 
 
 end
-
