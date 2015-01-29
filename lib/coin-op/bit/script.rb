@@ -65,7 +65,7 @@ module CoinOp::Bit
     end
 
     def address
-      Bitcoin.encode_address(@native.get_hash160, @network[:p2sh_version])
+      @native.get_p2sh_address
     end
 
     def to_s
