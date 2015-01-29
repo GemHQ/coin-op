@@ -9,16 +9,17 @@ module CoinOp::Bit
 
     # Takes a Hash with required keys:
     #
-    # * either :transaction (an instance of Transaction)
-    #   or :transaction_hash (the hex-encoded hash of a Bitcoin transaction)
+    # * either  :transaction (instance of Transaction)
+    #   or      :transaction_hash (hex-encoded hash of a Bitcoin transaction)
     # * :index
-    # * :script
+    # * :value
     #
     # optional keys:
     #
-    # * :value
-    # * :metadata
-    # 
+    # * either  :script (a value usable in Script.new)
+    #   or      :address (a valid Bitcoin address)
+    # * :metadata (a Hash with arbitrary contents)
+    #
     def initialize(options)
       if options[:transaction]
         @transaction = options[:transaction]
@@ -47,6 +48,7 @@ module CoinOp::Bit
       )
     end
 
+    # The bitcoin address generated from the associated Script.
     def address
       if @script
         @script.address
@@ -57,11 +59,13 @@ module CoinOp::Bit
       @metadata[:confirmations]
     end
 
+    # DEPRECATED
     def set_transaction(transaction, index)
       @transaction_hash = nil
       @transaction, @index = transaction, index
     end
 
+    # Returns the transaction hash for this output.
     def transaction_hash
       if @transaction
         @transaction.hex_hash

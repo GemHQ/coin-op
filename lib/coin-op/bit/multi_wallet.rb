@@ -8,6 +8,7 @@ module CoinOp::Bit
 
     NetworkMap = {
       :testnet3 => :bitcoin_testnet,
+      :bitcoin_testnet => :bitcoin_testnet,
       :bitcoin => :bitcoin
     }
 
@@ -20,7 +21,7 @@ module CoinOp::Bit
         name = name.to_sym
         masters[name] = MoneyTree::Master.new(:network => network)
       end
-      self.new(:private => masters)
+      self.new(:private => masters, :network => network)
     end
 
     attr_reader :trees
@@ -29,16 +30,18 @@ module CoinOp::Bit
       @private_trees = {}
       @public_trees = {}
       @trees = {}
-      private_trees = options[:private]
+      @network = NetworkMap[options.include? :network ? options[:network] : :testnet3]
 
       # FIXME: we should allow this.
-      if !private_trees
-        raise "Must supply :private"
-      end
+      # if !private_trees
+      #   raise "Must supply :private"
+      # end
 
-      private_trees.each do |name, arg|
-        name = name.to_sym
-        @private_trees[name] = @trees[name] = self.get_node(arg)
+      if private_trees = options[:private]
+        private_trees.each do |name, arg|
+          name = name.to_sym
+          @private_trees[name] = @trees[name] = self.get_node(arg)
+        end
       end
 
       if public_trees = options[:public]
@@ -137,7 +140,8 @@ module CoinOp::Bit
       options = {
         :path => path,
         :private => {},
-        :public => {}
+        :public => {},
+        :network => @network
       }
       @private_trees.each do |name, node|
         options[:private][name] = node.node_for_path(path)
@@ -230,6 +234,7 @@ module CoinOp::Bit
       @public_keys = {}
       @private = options[:private]
       @public = options[:public]
+      @network = options[:network]
 
       @private.each do |name, node|
         key = Bitcoin::Key.new(node.private_key.to_hex, node.public_key.to_hex)
@@ -242,9 +247,9 @@ module CoinOp::Bit
     end
 
     def script(m=2)
-      # m of n 
+      # m of n
       keys = @public_keys.sort_by {|name, key| name }.map {|name, key| key.pub }
-      Script.new(:public_keys => keys, :needed => m)
+      Script.new(:public_keys => keys, :needed => m, :network => @network)
     end
 
     def address
@@ -254,7 +259,7 @@ module CoinOp::Bit
     alias_method :p2sh_address, :address
 
     def p2sh_script
-      Script.new(:address => self.script.p2sh_address)
+      Script.new(:address => self.script.p2sh_address, :network => @network)
     end
 
     def sign(name, value)
@@ -280,4 +285,3 @@ module CoinOp::Bit
 
 
 end
-

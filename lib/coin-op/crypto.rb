@@ -1,19 +1,39 @@
+# Ruby bindings for libsodium, a port of DJB's NaCl crypto library
 require "rbnacl"
 require "openssl"
 
 module CoinOp
   module Crypto
 
+    # A wrapper for NaCl's Secret Box, taking a user-supplied passphrase
+    # and deriving a secret key, rather than using a (far more secure)
+    # randomly generated secret key.
+    #
+    # NaCl Secret Box provides a high level interface for authenticated
+    # symmetric encryption.  When creating the box, you must supply a key.
+    # When using the box to encrypt, you must supply a random nonce.  Nonces
+    # must never be re-used.
+    #
+    # Secret Box decryption requires the ciphertext and the nonce used to
+    # create it.
+    #
+    # The PassphraseBox class takes a passphrase, rather than a randomly
+    # generated key. It uses PBKDF2 to generate a key that, while not random,
+    # is somewhat resistant to brute force attacks.  Great care should still
+    # be taken to avoid passphrases that are subject to dictionary attacks.
     class PassphraseBox
-      include CoinOp::Encodings
+
+      # Both class and instance methods need encoding help, so we supply
+      # them to both scopes using extend and include, respectively.
       extend CoinOp::Encodings
+      include CoinOp::Encodings
 
       # PBKDF2 work factor
       ITERATIONS = 100_000
 
       # Given passphrase and plaintext as strings, returns a Hash
       # containing the ciphertext and other values needed for later
-      # decryption.
+      # decryption.  Binary values are encoded as hexadecimal strings.
       def self.encrypt(passphrase, plaintext)
         box = self.new(passphrase)
         box.encrypt(plaintext)
@@ -53,8 +73,8 @@ module CoinOp
         nonce = RbNaCl::Random.random_bytes(RbNaCl::SecretBox.nonce_bytes)
         ciphertext = @box.encrypt(nonce, plaintext)
         {
-          :salt => hex(@salt),
           :iterations => @iterations,
+          :salt => hex(@salt),
           :nonce => hex(nonce),
           :ciphertext => hex(ciphertext)
         }
