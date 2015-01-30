@@ -246,7 +246,7 @@ module CoinOp::Bit
       prev_out = input.output
       script ||= prev_out.script
 
-      @native.signature_hash_for_input(input.index, nil, script.to_blob)
+      @native.signature_hash_for_input(input.index, script.to_blob)
     end
 
     # A convenience method for authorizing inputs in a generic manner.
