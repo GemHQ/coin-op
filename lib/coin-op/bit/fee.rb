@@ -3,6 +3,7 @@ module CoinOp::Bit
 
   module Fee
 
+    # includes all methods as methods on Fee instance. ~ static methods
     module_function
 
     # Given an array of unspent Outputs and an array of Outputs for a
@@ -12,28 +13,40 @@ module CoinOp::Bit
     # that deviate from the customary single signature.
     #
     # Returns the estimated fee in satoshis.
-    def estimate(unspents, payees, tx_size=nil)
+    # unspents: an array of unspent outputs
+    # must respond to value, confirmations.
+    # payees: an array of hashes, who we expect to pay
+    # I assume keys = [:value, :address]
+    def estimate(unspents, payees)
       # https://en.bitcoin.it/wiki/Transaction_fees
 
-      # dupe because we'll need to add a change output
+      # so we don't modify original payees
       payees = payees.dup
-
+      # sum the values of the unspent outputs
       unspent_total = unspents.inject(0) {|sum, output| sum += output.value}
-      payee_total = payees.inject(0) {|sum, payee| sum += payee.value}
+      # sum the values going to each desired payee
+      payee_total = payees.inject(0) {|sum, payee| sum += payee[:value]}
+      # the change, i'm guessing a check for negatives was done elsewhere
       nominal_change = unspent_total - payee_total
-      payees << Output.new(:value => nominal_change)
+      # add the change transaction, no address though?
+      payees << {:value => nominal_change}
 
-      tx_size ||= estimate_tx_size(unspents.size, payees.size)
-      min = payees.min_by {|payee| payee.value }
+      # set in stone formula for tx size
+      tx_size = estimate_tx_size(unspents.size, payees.size)
+      # get the minumum desired payment
+      min = payees.min_by {|payee| payee[:value] }
 
+      # is tx size under 1000kb?
       small = tx_size < 1000
-      big_outputs = min.value > 1_000_000
+      # is the min desired payee "big"?
+      big_outputs = min[:value] > 1_000_000
 
       p = priority :size => tx_size, :unspents => (unspents.map do |output|
         {:value => output.value, :age => output.confirmations}
       end)
       high_priority = p > PRIORITY_THRESHOLD
 
+      # if the stars align, no fee
       if small && big_outputs && high_priority
         0
       else
@@ -69,6 +82,8 @@ module CoinOp::Bit
     # > transaction size of 250 bytes.
     PRIORITY_THRESHOLD = 57_600_000
 
+    # takes size in kb, num unspents
+    # priority defined by sum of unspent's values * their num confirmations / size of tx in kb
     def priority(params)
       tx_size, unspents = params.values_at :size, :unspents
       sum = unspents.inject(0) do |sum, output|

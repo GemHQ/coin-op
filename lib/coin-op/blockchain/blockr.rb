@@ -1,4 +1,4 @@
-require "http"
+require "net/http"
 require "json"
 require 'enumerator'
 
