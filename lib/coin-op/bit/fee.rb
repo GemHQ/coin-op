@@ -44,13 +44,16 @@ module CoinOp::Bit
     end
 
     def high_priority?(tx_size, unspents)
-      unspents.map! { |u| { value: u.value, age: u.confirmations } }
+      priority(tx_size, unspents) > PRIORITY_THRESHOLD
+    end
+
+    def priority(tx_size, unspents)
+      unspents.map! { |u| { value: u.value, age: u.confirmations || 0 } }
       sum = unspents.inject(0) do |sum, output|
-        age = output[:age] || 0
-        sum += (output[:value] * age)
+        sum += (output[:value] * output[:age])
         sum
       end
-      (sum / tx_size) > PRIORITY_THRESHOLD
+      sum / tx_size
     end
 
     def small?(tx_size)
@@ -77,14 +80,5 @@ module CoinOp::Bit
       (148 * num_inputs) + (34 * num_outputs) + 10
     end
 
-    def priority(params)
-      tx_size, unspents = params.values_at :size, :unspents
-      sum = unspents.inject(0) do |sum, output|
-        age = output[:age] || 0
-        sum += (output[:value] * age)
-        sum
-      end
-      sum / tx_size
-    end
   end
 end

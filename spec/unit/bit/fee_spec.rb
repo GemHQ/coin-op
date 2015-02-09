@@ -72,4 +72,22 @@ describe CoinOp::Bit::Fee do
       expect(CoinOp::Bit::Fee.nominal_change(unspents, payees).value).to eq 300
     end
   end
+
+  describe '.priority' do
+    context 'when confirmations is nil' do
+      it 'should return 0' do
+        unspents = [double('unspent', value: 1, confirmations: nil)]
+        expect(CoinOp::Bit::Fee.priority(42, unspents)).to eq 0
+      end
+    end
+
+    it 'should return sum of (value * confirmations) / tx_size' do
+      unspents = [
+          double('unspent', value: 1, confirmations: 4),
+          double('unspent', value: 5, confirmations: 10),
+          double('unspent', value: 10, confirmations: 3)
+      ]
+      expect(CoinOp::Bit::Fee.priority(21, unspents)).to eq 4
+    end
+  end
 end
