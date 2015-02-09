@@ -112,4 +112,11 @@ describe CoinOp::Bit::Fee do
       end
     end
   end
+
+  describe '.fee_for_bytes' do
+    it 'should be bytes / 100 + 1 * bitcoin min tx fee' do
+      expect(Bitcoin).to receive(:network).and_return({ min_tx_fee: 10 })
+      expect(CoinOp::Bit::Fee.fee_for_bytes(1000)).to eq 20
+    end
+  end
 end

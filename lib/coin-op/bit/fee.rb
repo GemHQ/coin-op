@@ -23,14 +23,11 @@ module CoinOp::Bit
     #
     # Returns the estimated fee in satoshis.
     def estimate(unspents, payees, tx_size=nil)
+      tx_size ||= estimate_tx_size(unspents.size, payees.size)
       # https://en.bitcoin.it/wiki/Transaction_fees
-
       # dupe because we'll need to add a change output
       payees = payees.dup
-      tx_size ||= estimate_tx_size(unspents.size, payees.size)
-
       payees << nominal_change(unspents, payees)
-
 
       return 0 if small?(tx_size) && big_outputs?(payees) && high_priority?(tx_size, unspents)
       fee_for_bytes(tx_size)
@@ -77,6 +74,5 @@ module CoinOp::Bit
       # From http://bitcoinfees.com.
       (148 * num_inputs) + (34 * num_outputs) + 10
     end
-
   end
 end
