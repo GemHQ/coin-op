@@ -1,6 +1,17 @@
 module CoinOp::Bit
 
   module Fee
+    # https://en.bitcoin.it/wiki/Transaction_fees#Including_in_Blocks
+    #
+    # https://en.bitcoin.it/wiki/Transaction_fees#Technical_info
+    # > Transactions need to have a priority above 57,600,000 to avoid the
+    # > enforced limit.... This threshold is written in the code as
+    # > COIN * 144 / 250, suggesting that the threshold represents a one day
+    # > old, 1 btc coin (144 is the expected number of blocks per day) and a
+    # > transaction size of 250 bytes.
+    PRIORITY_THRESHOLD = 57_600_000
+    TX_SIZE_THRESHOLD = 1000
+    PAYEE_VALUE_THRESHOLD = 1_000_000
 
     module_function
 
@@ -17,21 +28,13 @@ module CoinOp::Bit
       # dupe because we'll need to add a change output
       payees = payees.dup
 
-      unspent_total = unspents.inject(0) {|sum, output| sum += output.value}
-      payee_total = payees.inject(0) {|sum, payee| sum += payee.value}
-      nominal_change = unspent_total - payee_total
-      payees << Output.new(:value => nominal_change)
+      payees << Output.new(value: nominal_change(unspents, payees))
 
       tx_size ||= estimate_tx_size(unspents.size, payees.size)
-      min = payees.min_by {|payee| payee.value }
 
-      small = tx_size < 1000
-      big_outputs = min.value > 1_000_000
-
-      p = priority :size => tx_size, :unspents => (unspents.map do |output|
-                                     {:value => output.value, :age => output.confirmations}
-                                   end)
-      high_priority = p > PRIORITY_THRESHOLD
+      small = small?(tx_size)
+      big_outputs = big_outputs?(payees)
+      high_priority = high_priority?(tx_size, unspents)
 
       if small && big_outputs && high_priority
         0
@@ -39,6 +42,31 @@ module CoinOp::Bit
         fee_for_bytes(tx_size)
       end
 
+    end
+
+    def nominal_change(unspents, payees)
+      unspent_total = unspents.inject(0) {|sum, output| sum += output.value}
+      payee_total = payees.inject(0) {|sum, payee| sum += payee.value}
+      nominal_change = unspent_total - payee_total
+      nominal_change
+    end
+
+    def high_priority?(tx_size, unspents)
+      unspents.map! { |u| { value: u.value, age: u.confirmations } }
+      sum = unspents.inject(0) do |sum, output|
+        age = output[:age] || 0
+        sum += (output[:value] * age)
+        sum
+      end
+      (sum / tx_size) > PRIORITY_THRESHOLD
+    end
+
+    def small?(tx_size)
+      tx_size < TX_SIZE_THRESHOLD
+    end
+
+    def big_outputs?(payees)
+      payees.map(&:value).min > PAYEE_VALUE_THRESHOLD
     end
 
     def fee_for_bytes(bytes)
