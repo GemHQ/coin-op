@@ -58,15 +58,7 @@ module CoinOp::Bit
     end
 
 
-    # https://en.bitcoin.it/wiki/Transaction_fees#Including_in_Blocks
-    #
-    # https://en.bitcoin.it/wiki/Transaction_fees#Technical_info
-    # > Transactions need to have a priority above 57,600,000 to avoid the
-    # > enforced limit.... This threshold is written in the code as
-    # > COIN * 144 / 250, suggesting that the threshold represents a one day
-    # > old, 1 btc coin (144 is the expected number of blocks per day) and a
-    # > transaction size of 250 bytes.
-    PRIORITY_THRESHOLD = 57_600_000
+
 
     def priority(params)
       tx_size, unspents = params.values_at :size, :unspents
