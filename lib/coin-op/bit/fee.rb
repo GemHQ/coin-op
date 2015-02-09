@@ -27,28 +27,20 @@ module CoinOp::Bit
 
       # dupe because we'll need to add a change output
       payees = payees.dup
-
-      payees << Output.new(value: nominal_change(unspents, payees))
-
       tx_size ||= estimate_tx_size(unspents.size, payees.size)
 
-      small = small?(tx_size)
-      big_outputs = big_outputs?(payees)
-      high_priority = high_priority?(tx_size, unspents)
+      payees << nominal_change(unspents, payees)
 
-      if small && big_outputs && high_priority
-        0
-      else
-        fee_for_bytes(tx_size)
-      end
 
+      return 0 if small?(tx_size) && big_outputs?(payees) && high_priority?(tx_size, unspents)
+      fee_for_bytes(tx_size)
     end
 
     def nominal_change(unspents, payees)
-      unspent_total = unspents.inject(0) {|sum, output| sum += output.value}
-      payee_total = payees.inject(0) {|sum, payee| sum += payee.value}
-      nominal_change = unspent_total - payee_total
-      nominal_change
+      # SHOULD THERE BE AN ASSERTION THAT unspent - payee > 0 ??
+      unspent = unspents.lazy.map(&:value).reduce(:+)
+      payee = payees.lazy.map(&:value).reduce(:+)
+      Output.new(value: unspent - payee)
     end
 
     def high_priority?(tx_size, unspents)
@@ -85,9 +77,6 @@ module CoinOp::Bit
       (148 * num_inputs) + (34 * num_outputs) + 10
     end
 
-
-
-
     def priority(params)
       tx_size, unspents = params.values_at :size, :unspents
       sum = unspents.inject(0) do |sum, output|
@@ -97,7 +86,5 @@ module CoinOp::Bit
       end
       sum / tx_size
     end
-
-
   end
 end

@@ -3,17 +3,9 @@ require 'spec_helper'
 describe CoinOp::Bit::Fee do
 
   describe '.estimate' do
-      let(:unspents) do
-        [
-          double('unspent', value: 60_000_000, confirmations: 1),
-          double('unspent', value: 50_000_000, confirmations: 2),
-        ]
-      end
-      let(:payees) do
-        [
-          double('payee', value: 10_000_010)
-        ]
-      end
+    let(:unspents) { [ double('unspent', value: 1, confirmations: 1) ] }
+    let(:payees) { [ double('payee', value: 1) ] }
+
     it 'should not modify payees' do
       expect { CoinOp::Bit::Fee.estimate(unspents, payees) }.to change { payees.size }.by 0
     end
@@ -45,8 +37,7 @@ describe CoinOp::Bit::Fee do
       it 'should return the fee' do
         expect(CoinOp::Bit::Fee).to receive(:fee_for_bytes).and_return 42
         expect(CoinOp::Bit::Fee).to receive(:big_outputs?).and_return true
-        expect(CoinOp::Bit::Fee).to receive(:small?).and_return false
-        expect(CoinOp::Bit::Fee).to receive(:high_priority?).and_return false
+        expect(CoinOp::Bit::Fee).to receive(:small?).and_return true
         expect(CoinOp::Bit::Fee.estimate(unspents, payees)).to eq 42
       end
     end
@@ -56,19 +47,29 @@ describe CoinOp::Bit::Fee do
         expect(CoinOp::Bit::Fee).to receive(:fee_for_bytes).and_return 42
         expect(CoinOp::Bit::Fee).to receive(:big_outputs?).and_return false
         expect(CoinOp::Bit::Fee).to receive(:small?).and_return true
-        expect(CoinOp::Bit::Fee).to receive(:high_priority?).and_return false
         expect(CoinOp::Bit::Fee.estimate(unspents, payees)).to eq 42
       end
     end
+  end
 
-    context 'high_priority? is true' do
-      it 'should return the fee' do
-        expect(CoinOp::Bit::Fee).to receive(:fee_for_bytes).and_return 42
-        expect(CoinOp::Bit::Fee).to receive(:big_outputs?).and_return false
-        expect(CoinOp::Bit::Fee).to receive(:small?).and_return false
-        expect(CoinOp::Bit::Fee).to receive(:high_priority?).and_return true
-        expect(CoinOp::Bit::Fee.estimate(unspents, payees)).to eq 42
-      end
+  describe '.nominal_change' do
+    let(:unspents) do
+      [
+        double('unspent', value: 100),
+        double('unspent', value: 200),
+        double('unspent', value: 200),
+      ]
+    end
+    let(:payees) do
+      [
+        double('payee', value: 100),
+        double('payee', value: 50),
+        double('payee', value: 50)
+      ]
+    end
+
+    it 'should return the difference in sums of values' do
+      expect(CoinOp::Bit::Fee.nominal_change(unspents, payees).value).to eq 300
     end
   end
 end
