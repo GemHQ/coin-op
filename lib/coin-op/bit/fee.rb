@@ -48,11 +48,9 @@ module CoinOp::Bit
     end
 
     def priority(tx_size, unspents)
-      unspents.map! { |u| { value: u.value, age: u.confirmations || 0 } }
-      sum = unspents.inject(0) do |sum, output|
-        sum += (output[:value] * output[:age])
-        sum
-      end
+      sum = unspents.lazy.map do |output|
+        output.value * (output.confirmations || 0)
+      end.reduce(:+)
       sum / tx_size
     end
 

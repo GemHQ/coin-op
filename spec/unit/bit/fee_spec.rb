@@ -90,4 +90,6 @@ describe CoinOp::Bit::Fee do
       expect(CoinOp::Bit::Fee.priority(21, unspents)).to eq 4
     end
   end
+
+  describe ''
 end
