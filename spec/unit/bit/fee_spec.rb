@@ -91,5 +91,25 @@ describe CoinOp::Bit::Fee do
     end
   end
 
-  describe ''
+  describe '.big_outputs?' do
+    context 'when min payee value is > threshold' do
+      it 'should be true' do
+        payees = [
+            double('payee', value: CoinOp::Bit::Fee::PAYEE_VALUE_THRESHOLD + 1),
+            double('payee', value: CoinOp::Bit::Fee::PAYEE_VALUE_THRESHOLD + 2)
+        ]
+        expect(CoinOp::Bit::Fee.big_outputs?(payees)).to eq true
+      end
+    end
+
+    context 'when min payee value is < threshold' do
+      it 'should be false' do
+        payees = [
+            double('payee', value: CoinOp::Bit::Fee::PAYEE_VALUE_THRESHOLD - 1),
+            double('payee', value: CoinOp::Bit::Fee::PAYEE_VALUE_THRESHOLD + 2)
+        ]
+        expect(CoinOp::Bit::Fee.big_outputs?(payees)).to eq false
+      end
+    end
+  end
 end
