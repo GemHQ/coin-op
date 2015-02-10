@@ -53,22 +53,22 @@ module CoinOp::Bit
 
     # Construct a transaction from an instance of ::Bitcoin::Protocol::Tx
     def self.native(tx)
-      transaction = self.new()
+      transaction = new
       # TODO: reconsider use of instance_eval
       transaction.instance_eval do
         @native = tx
-        tx.inputs.each do |input|
+        @inputs = tx.inputs.collect do |input|
           # We use SparseInput because it does not require the retrieval
           # of the previous output.  Its functionality should probably be
           # folded into the Input class.
-          @inputs << SparseInput.new(input.prev_out, input.prev_out_index)
+          SparseInput.new(input.prev_out, input.prev_out_index)
         end
-        tx.outputs.each_with_index do |output, i|
-          @outputs << Output.new(
-            :transaction => transaction,
-            :index => i,
-            :value => output.value,
-            :script => {:blob => output.pk_script}
+        @outputs = tx.outputs.each_with_index.map do |output, i|
+          Output.new(
+            transaction: transaction,
+            index: i,
+            value: output.value,
+            script: { blob: output.pk_script }
           )
         end
       end
