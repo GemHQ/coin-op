@@ -18,11 +18,8 @@ module CoinOp::Bit
     #
     # * script_sig_asm - the string form of the scriptSig for this input
     #
-    def initialize(options={})
-      @transaction, @index, @output =
-        options.values_at :transaction, :index, :output
-
-      script_sig_asm = options[:script_sig_asm]
+    def initialize(transaction:, index:, output:, script_sig_asm: nil)
+      @transaction, @index, @output = transaction, index, output
 
       unless @output.is_a? Output
         @output = Output.new(@output)
