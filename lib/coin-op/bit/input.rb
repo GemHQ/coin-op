@@ -77,6 +77,7 @@ module CoinOp::Bit
   # for an input.
   class SparseInput
     include CoinOp::Encodings
+    attr_reader :output
 
     def initialize(binary_hash, index)
       @output = {

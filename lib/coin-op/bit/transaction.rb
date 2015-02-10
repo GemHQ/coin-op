@@ -14,7 +14,7 @@ module CoinOp::Bit
     # and Arrays.
     def self.data(data)
       version, lock_time, fee, inputs, outputs, confirmations =
-        data.values_at :version, :lock_time, :fee, :inputs, :outputs, :confirmations
+        data.values_at(:version, :lock_time, :fee, :inputs, :outputs, :confirmations)
 
       transaction = self.new(
         :fee => fee,
@@ -30,7 +30,7 @@ module CoinOp::Bit
 
       if inputs
         # TODO: use #each instead of #each_with_index
-        inputs.each_with_index do |data, index|
+        inputs.each do |data|
           transaction.add_input(data)
 
           ## FIXME: verify that the supplied and computed sig_hashes match
@@ -43,12 +43,12 @@ module CoinOp::Bit
 
     # Construct a Transaction from raw bytes.
     def self.raw(raw_tx)
-      self.native ::Bitcoin::Protocol::Tx.new(raw_tx)
+      self.native(::Bitcoin::Protocol::Tx.new(raw_tx))
     end
 
     # Construct a Transaction from a hex representation of the raw bytes.
     def self.hex(hex)
-      self.from_bytes CoinOp::Encodings.decode_hex(hex)
+      self.from_bytes(CoinOp::Encodings.decode_hex(hex))
     end
 
     # Construct a transaction from an instance of ::Bitcoin::Protocol::Tx
@@ -57,7 +57,7 @@ module CoinOp::Bit
       # TODO: reconsider use of instance_eval
       transaction.instance_eval do
         @native = tx
-        tx.inputs.each_with_index do |input, i|
+        tx.inputs.each do |input|
           # We use SparseInput because it does not require the retrieval
           # of the previous output.  Its functionality should probably be
           # folded into the Input class.
