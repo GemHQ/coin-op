@@ -64,6 +64,10 @@ module CoinOp::Bit
       @string = @native.to_string
     end
 
+    def ==(o)
+      o.to_blob == @blob
+    end
+
     def address
       @native.get_p2sh_address
     end

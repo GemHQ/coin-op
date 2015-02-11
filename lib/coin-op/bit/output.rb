@@ -20,31 +20,23 @@ module CoinOp::Bit
     #   or      :address (a valid Bitcoin address)
     # * :metadata (a Hash with arbitrary contents)
     #
-    def initialize(options)
-      if options[:transaction]
-        @transaction = options[:transaction]
-      elsif options[:transaction_hash]
-        @transaction_hash = options[:transaction_hash]
+    def initialize(index:, value:, transaction: nil, transaction_hash: nil,
+                    metadata: {}, script: nil, address: nil, confirmations: 0)
+      unless transaction || transaction_hash
+        raise ArgumentError, 'Must provide either transaction or transaction hash!'
       end
-
-      # FIXME: be aware of string bitcoin values versus
-      # integer satoshi values
-      @index, @value, @address, confirmations =
-        options.values_at :index, :value, :address, :confirmations
-
-      @metadata = options[:metadata] || {}
-      @metadata[:confirmations] ||= confirmations
-
-      if options[:script]
-        @script = Script.new(options[:script])
-      elsif @address
-        @script = Script.new(:address => @address)
+      unless script || address
+        raise ArgumentError, 'Must provide either script or address!'
       end
+      @transaction = transaction || transaction_hash
+      @index, @value, @address, @metadata = index, value, address, metadata
+      @metadata[:confirmations] = confirmations
 
+      @script = script ? Script.new(script) : Script.new(address: address)
 
       @native = Bitcoin::Protocol::TxOut.from_hash(
-        "value" => @value.to_s,
-        "scriptPubKey" => @script.to_s
+        'value' => @value.to_s,
+        'scriptPubKey' => @script.to_s
       )
     end
 

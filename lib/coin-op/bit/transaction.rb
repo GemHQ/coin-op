@@ -29,7 +29,6 @@ module CoinOp::Bit
       #FIXME: we're not handling sig_scripts for already signed inputs.
 
       if inputs
-        # TODO: use #each instead of #each_with_index
         inputs.each do |data|
           transaction.add_input(data)
 
