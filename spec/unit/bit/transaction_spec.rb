@@ -85,4 +85,30 @@ describe CoinOp::Bit::Transaction do
       expect(tx.outputs.size).to eq 2
     end
   end
+
+  describe '#validate_script_sigs' do
+     context 'when one is invalid' do
+       it 'should return valid false and array of invalids' do
+         native = double('native')
+         inputs = [spy('input')] * 3
+         tx = CoinOp::Bit::Transaction.data(outputs: [])
+         expect(native).to receive(:verify_input_signature).and_return(false, true, false)
+         tx.instance_variable_set(:@native, native)
+         expect(tx).to receive(:inputs).and_return inputs
+         expect(tx.validate_script_sigs).to eq({ valid: false, inputs: [0, 2] })
+       end
+     end
+
+    context 'when none are invalid' do
+      it 'should return valid true and empty array' do
+        native = double('native')
+        inputs = [spy('input')] * 3
+        tx = CoinOp::Bit::Transaction.data(outputs: [])
+        expect(native).to receive(:verify_input_signature).and_return(true, true, true)
+        tx.instance_variable_set(:@native, native)
+        expect(tx).to receive(:inputs).and_return inputs
+        expect(tx.validate_script_sigs).to eq({ valid: true, inputs: [] })
+      end
+    end
+  end
 end

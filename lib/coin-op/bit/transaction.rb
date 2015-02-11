@@ -106,7 +106,7 @@ module CoinOp::Bit
     def update_native
       yield @native if block_given?
       @native = Bitcoin::Protocol::Tx.new(@native.to_payload)
-      @inputs.each_with_index do |input, i|
+      inputs.each_with_index do |input, i|
         native = @native.inputs[i]
         # Using instance_eval here because I really don't want to expose
         # Input#native=.  As we consume more and more of the native
@@ -132,18 +132,12 @@ module CoinOp::Bit
 
     # Verify that the script_sigs for all inputs are valid.
     def validate_script_sigs
-      bad_inputs = []
-      valid = true
-      @inputs.each_with_index do |input, index|
+      bad_inputs = inputs.each_with_index.map do |input, index|
         # TODO: confirm whether we need to mess with the block_timestamp arg
 
-        unless self.native.verify_input_signature(index, input.output.transaction.native)
-          valid = false
-          bad_inputs << index
-        end
-
-      end
-      {:valid => valid, :inputs => bad_inputs}
+        index unless native.verify_input_signature(index, input.output.transaction.native)
+      end.compact
+      { valid: bad_inputs.empty?, inputs: bad_inputs }
     end
 
     def add_input_from_hash(input)
