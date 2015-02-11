@@ -20,7 +20,7 @@ module CoinOp::Bit
     #   or      :address (a valid Bitcoin address)
     # * :metadata (a Hash with arbitrary contents)
     #
-    def initialize(index:, value:, transaction: nil, transaction_hash: nil,
+    def initialize(value:, index: nil, transaction: nil, transaction_hash: nil,
                     metadata: {}, script: nil, address: nil, confirmations: 0)
       unless transaction || transaction_hash
         raise ArgumentError, 'Must provide either transaction or transaction hash!'
@@ -28,7 +28,8 @@ module CoinOp::Bit
       unless script || address
         raise ArgumentError, 'Must provide either script or address!'
       end
-      @transaction = transaction || transaction_hash
+      @transaction = transaction
+      @transaction_hash = transaction_hash
       @index, @value, @address, @metadata = index, value, address, metadata
       @metadata[:confirmations] = confirmations
 

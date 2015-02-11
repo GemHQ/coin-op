@@ -53,4 +53,36 @@ describe CoinOp::Bit::Transaction do
       end
     end
   end
+
+  describe '.data' do
+    it 'should set fee, confirmations' do
+      tx = CoinOp::Bit::Transaction.data(fee: 2, confirmations: 1, outputs: [])
+      expect(tx.fee_override).to eq 2
+      expect(tx.confirmations).to eq 1
+    end
+
+    it 'should set inputs' do
+      output1 = double('output', transaction_hash: 'hash1', index: 42, is_a?: true)
+      output2 = double('output', transaction_hash: 'hash2', index: 43, is_a?: true)
+      inputs = [
+          { output: output1 },
+          { output: output2 }
+      ]
+      tx = CoinOp::Bit::Transaction.data(inputs: inputs, outputs: [])
+      expect(tx.inputs[0].output.index).to eq 42
+      expect(tx.inputs[1].output.index).to eq 43
+      expect(tx.inputs.size).to eq 2
+    end
+
+    it 'should set outputs' do
+      outputs = [
+          { index: 108, value: 5, transaction_hash: 'hash1', address: '37oUcVHj6yC1rk9YyQrJioW36U24UxP6YR' },
+          { index: 109, value: 6, transaction_hash: 'hash2', address: '37oUcVHj6yC1rk9YyQrJioW36U24UxP6YR' }
+      ]
+      tx = CoinOp::Bit::Transaction.data(outputs: outputs)
+      expect(tx.outputs[0].script).to eq CoinOp::Bit::Script.new(address: '37oUcVHj6yC1rk9YyQrJioW36U24UxP6YR')
+      expect(tx.outputs[1].script).to eq CoinOp::Bit::Script.new(address: '37oUcVHj6yC1rk9YyQrJioW36U24UxP6YR')
+      expect(tx.outputs.size).to eq 2
+    end
+  end
 end

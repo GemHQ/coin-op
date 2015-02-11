@@ -12,29 +12,25 @@ module CoinOp::Bit
 
     # Construct a Transaction from a data structure of nested Hashes
     # and Arrays.
-    def self.data(data)
-      version, lock_time, fee, inputs, outputs, confirmations =
-        data.values_at(:version, :lock_time, :fee, :inputs, :outputs, :confirmations)
-
-      transaction = self.new(
-        :fee => fee,
-        :version => version, :lock_time => lock_time,
-        :confirmations => confirmations
+    def self.data(outputs:, confirmations: nil, fee: nil, inputs: [], version: nil, lock_time: nil)
+      transaction = new(
+        fee: fee,
+        version: version,
+        lock_time: lock_time,
+        confirmations: confirmations
       )
 
       outputs.each do |data|
-        transaction.add_output Output.new(data)
+        transaction.add_output(Output.new(data))
       end
 
       #FIXME: we're not handling sig_scripts for already signed inputs.
 
-      if inputs
-        inputs.each do |data|
-          transaction.add_input(data)
+      inputs.each do |data|
+        transaction.add_input_from_hash(data)
 
-          ## FIXME: verify that the supplied and computed sig_hashes match
-          #puts :sig_hashes_match => (data[:sig_hash] == input.sig_hash)
-        end
+        ## FIXME: verify that the supplied and computed sig_hashes match
+        #puts :sig_hashes_match => (data[:sig_hash] == input.sig_hash)
       end
 
       transaction
@@ -91,7 +87,7 @@ module CoinOp::Bit
     end
 
 
-    attr_reader :native, :inputs, :outputs, :confirmations
+    attr_reader :native, :inputs, :outputs, :confirmations, :fee_override
 
     # A new Transaction contains no inputs or outputs; these can be added with
     # #add_input and #add_output.
@@ -150,6 +146,10 @@ module CoinOp::Bit
       {:valid => valid, :inputs => bad_inputs}
     end
 
+    def add_input_from_hash(input)
+      add_input(Input.new(input.merge(transaction: self, index: @inputs.size)))
+    end
+
     # Takes one of
     #
     # * an instance of Input
@@ -157,18 +157,8 @@ module CoinOp::Bit
     # * a Hash describing an Output
     #
     def add_input(input)
-      # TODO: allow specifying prev_tx and index with a Hash.
-      # Possibly stop using SparseInput.
-
-      unless input.is_a?(Input)
-        input = Input.new input.merge(
-          :transaction => self,
-          :index => @inputs.size,
-        )
-      end
-
       @inputs << input
-      self.update_native do |native|
+      update_native do |native|
         native.add_in input.native
       end
       input

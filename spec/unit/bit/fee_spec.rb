@@ -60,16 +60,10 @@ describe CoinOp::Bit::Fee do
         double('unspent', value: 200),
       ]
     end
-    let(:payees) do
-      [
-        double('payee', value: 100),
-        double('payee', value: 50),
-        double('payee', value: 50)
-      ]
-    end
+    let(:output_amounts) { [100, 50, 50] }
 
     it 'should return the difference in sums of values' do
-      expect(CoinOp::Bit::Fee.nominal_change(unspents, payees).value).to eq 300
+      expect(CoinOp::Bit::Fee.nominal_change(unspents, output_amounts)).to eq 300
     end
   end
 
@@ -95,8 +89,8 @@ describe CoinOp::Bit::Fee do
     context 'when min payee value is > threshold' do
       it 'should be true' do
         payees = [
-            double('payee', value: CoinOp::Bit::Fee::PAYEE_VALUE_THRESHOLD + 1),
-            double('payee', value: CoinOp::Bit::Fee::PAYEE_VALUE_THRESHOLD + 2)
+            CoinOp::Bit::Fee::PAYEE_VALUE_THRESHOLD + 1,
+            CoinOp::Bit::Fee::PAYEE_VALUE_THRESHOLD + 2
         ]
         expect(CoinOp::Bit::Fee.big_outputs?(payees)).to eq true
       end
@@ -105,8 +99,8 @@ describe CoinOp::Bit::Fee do
     context 'when min payee value is < threshold' do
       it 'should be false' do
         payees = [
-            double('payee', value: CoinOp::Bit::Fee::PAYEE_VALUE_THRESHOLD - 1),
-            double('payee', value: CoinOp::Bit::Fee::PAYEE_VALUE_THRESHOLD + 2)
+            CoinOp::Bit::Fee::PAYEE_VALUE_THRESHOLD - 1,
+            CoinOp::Bit::Fee::PAYEE_VALUE_THRESHOLD + 2
         ]
         expect(CoinOp::Bit::Fee.big_outputs?(payees)).to eq false
       end

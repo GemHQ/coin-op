@@ -24,20 +24,18 @@ module CoinOp::Bit
     # Returns the estimated fee in satoshis.
     def estimate(unspents, payees, tx_size=nil)
       tx_size ||= estimate_tx_size(unspents.size, payees.size)
-      # https://en.bitcoin.it/wiki/Transaction_fees
-      # dupe because we'll need to add a change output
-      payees = payees.dup
-      payees << nominal_change(unspents, payees)
+      output_amounts = payees.map(&:value)
+      output_amounts << nominal_change(unspents, output_amounts)
 
-      return 0 if small?(tx_size) && big_outputs?(payees) && high_priority?(tx_size, unspents)
+      return 0 if small?(tx_size) && big_outputs?(output_amounts) && high_priority?(tx_size, unspents)
       fee_for_bytes(tx_size)
     end
 
-    def nominal_change(unspents, payees)
+    def nominal_change(unspents, output_amounts)
       # SHOULD THERE BE AN ASSERTION THAT unspent - payee > 0 ??
-      unspent = unspents.lazy.map(&:value).reduce(:+)
-      payee = payees.lazy.map(&:value).reduce(:+)
-      Output.new(value: unspent - payee)
+      unspent = unspents.map(&:value).reduce(:+)
+      output_amount = output_amounts.reduce(:+)
+      unspent - output_amount
     end
 
     def high_priority?(tx_size, unspents)
@@ -55,8 +53,8 @@ module CoinOp::Bit
       tx_size < TX_SIZE_THRESHOLD
     end
 
-    def big_outputs?(payees)
-      payees.map(&:value).min > PAYEE_VALUE_THRESHOLD
+    def big_outputs?(output_amounts)
+      output_amounts.min > PAYEE_VALUE_THRESHOLD
     end
 
     def fee_for_bytes(bytes)
