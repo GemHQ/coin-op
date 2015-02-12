@@ -52,21 +52,9 @@ module CoinOp::Bit
       @metadata[:confirmations]
     end
 
-    # DEPRECATED
-    def set_transaction(transaction, index)
-      @transaction_hash = nil
-      @transaction, @index = transaction, index
-    end
-
     # Returns the transaction hash for this output.
     def transaction_hash
-      if @transaction
-        @transaction.hex_hash
-      elsif @transaction_hash
-        @transaction_hash
-      else
-        ""
-      end
+      @transaction ? @transaction.hex_hash : @transaction_hash
     end
 
 

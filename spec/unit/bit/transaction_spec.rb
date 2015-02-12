@@ -1,6 +1,9 @@
 require 'spec_helper'
 
 describe CoinOp::Bit::Transaction do
+  before do
+    allow_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax)
+  end
   describe '.native' do
     let(:inputs) do
       [
@@ -15,8 +18,7 @@ describe CoinOp::Bit::Transaction do
       ]
     end
     it 'should set outputs' do
-      expect_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax).and_return({ valid: true })
-      tx = double('tx', outputs: outputs, inputs: [])
+      tx = spy('tx', outputs: outputs, inputs: [])
       transaction = CoinOp::Bit::Transaction.native(tx)
       expect(transaction.outputs[0].transaction).to eq transaction
       expect(transaction.outputs[0].index).to eq 0
@@ -29,25 +31,23 @@ describe CoinOp::Bit::Transaction do
     end
 
     it 'should set inputs' do
-      expect_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax).and_return({ valid: true })
-      tx = double('tx', outputs: [], inputs: inputs)
+      tx = spy('tx', outputs: [], inputs: inputs)
       transaction = CoinOp::Bit::Transaction.native(tx)
       expect(transaction.inputs[0].native.prev_out_index).to eq '01'
       expect(transaction.inputs[1].native.prev_out_index).to eq '02'
     end
 
     it 'should set native' do
-      expect_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax).and_return({ valid: true })
-      tx = double('tx', outputs: outputs, inputs: inputs)
+      tx = spy('tx', outputs: outputs, inputs: inputs)
       transaction = CoinOp::Bit::Transaction.native(tx)
       expect(transaction.native).to eq tx
     end
 
     context 'invalid syntax' do
       it 'should raise error' do
-        expect_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax).and_return({ valid: false })
-        tx = double('tx', outputs: outputs, inputs: inputs)
-        expect { CoinOp::Bit::Transaction.native(tx) }.to raise_error
+        expect_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax).and_raise(CoinOp::Bit::Transaction::InvalidNativeSyntaxError)
+        tx = spy('tx', outputs: outputs, inputs: inputs)
+        expect { CoinOp::Bit::Transaction.native(tx) }.to raise_error(CoinOp::Bit::Transaction::InvalidNativeSyntaxError)
       end
     end
   end

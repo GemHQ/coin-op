@@ -39,10 +39,6 @@ module CoinOp::Bit
       end
     end
 
-    def native_with_confidence=(native)
-      @native = native
-    end
-
     # Set the sig_hash (the digest used in signing) for this input using a
     # string of bytes.
     def binary_sig_hash=(blob)
@@ -61,7 +57,6 @@ module CoinOp::Bit
       @native.script_sig = blob
     end
 
-
     def to_json(*a)
       {
         :output => self.output,
@@ -70,7 +65,6 @@ module CoinOp::Bit
         :script_sig => self.script_sig || ""
       }.to_json(*a)
     end
-
   end
 end
 

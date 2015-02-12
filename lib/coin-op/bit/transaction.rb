@@ -3,37 +3,23 @@ module CoinOp::Bit
   class Transaction
     include CoinOp::Encodings
 
-    # Deprecated.  Easier to use Transaction.from_data
-    def self.build(&block)
-      transaction = self.new
-      yield transaction
-      transaction
+    DeprecationError = Class.new(StandardError)
+    def self.build
+      raise DeprecationError
     end
+
+    # Preparation for interface change, where the from_foo methods become
+    # preferred, and the terser method names are deprecated.
+    #
+    # This nasty little construct allows us to work on the class's metaclass.
 
     # Construct a Transaction from a data structure of nested Hashes
     # and Arrays.
     def self.data(outputs:, confirmations: nil, fee: nil, inputs: [], version: nil, lock_time: nil)
-      transaction = new(
-        fee: fee,
-        version: version,
-        lock_time: lock_time,
-        confirmations: confirmations
-      )
-
-      outputs.each do |data|
-        transaction.add_output(Output.new(data))
+      new(fee: fee, version: version, lock_time: lock_time, confirmations: confirmations ) do |t|
+        t.inputs = inputs
+        t.outputs = outputs
       end
-
-      #FIXME: we're not handling sig_scripts for already signed inputs.
-
-      inputs.each do |data|
-        transaction.add_input(data)
-
-        ## FIXME: verify that the supplied and computed sig_hashes match
-        #puts :sig_hashes_match => (data[:sig_hash] == input.sig_hash)
-      end
-
-      transaction
     end
 
     # Construct a Transaction from raw bytes.
@@ -48,17 +34,16 @@ module CoinOp::Bit
 
     # Construct a transaction from an instance of ::Bitcoin::Protocol::Tx
     def self.native(tx)
-      transaction = new
-      transaction.update do |update|
-        update.native = tx
-        update.inputs = tx.inputs.each_with_index.collect do |input, i|
+      new do |updater, transaction|
+        updater.native = tx
+        updater.inputs = tx.inputs.each_with_index.collect do |input, i|
           Input.new_without_output(
-              index: i,
-              prev_transaction_hash: input.prev_out,
-              prev_out_index: input.prev_out_index
+            index: i,
+            prev_transaction_hash: input.prev_out,
+            prev_out_index: input.prev_out_index
           )
         end
-        update.outputs = tx.outputs.each_with_index.collect do |output, i|
+        updater.outputs = tx.outputs.each_with_index.collect do |output, i|
           Output.new(
             transaction: transaction,
             index: i,
@@ -67,27 +52,8 @@ module CoinOp::Bit
           )
         end
       end
-
-      report = transaction.validate_syntax
-      unless report[:valid] == true
-        raise "Invalid syntax:  #{report[:error].to_json}"
-      end
-      transaction
     end
 
-    TransactionUpdater = Struct.new(:native, :inputs, :outputs)
-    def update(&block)
-      t = TransactionUpdater.new
-      block.call(t)
-      @native = t.native
-      @inputs = t.inputs
-      @outputs = t.outputs
-    end
-
-    # Preparation for interface change, where the from_foo methods become
-    # preferred, and the terser method names are deprecated.
-    #
-    # This nasty little construct allows us to work on the class's metaclass.
     class << self
       alias_method :from_data, :data
       alias_method :from_hex, :hex
@@ -95,47 +61,37 @@ module CoinOp::Bit
       alias_method :from_native, :native
     end
 
+    TransactionUpdater = Struct.new(:native, :inputs, :outputs)
+    def update(&block)
+      t = TransactionUpdater.new
+      block.call(t, self)
+      @native = t.native if t.native
+      t.inputs.each { |i| add_input(i) }
+      t.outputs.each { |i| add_output(i) }
+      validate_syntax
+      self
+    end
 
-    attr_reader :native, :inputs, :outputs, :confirmations, :fee_override
+    attr_reader :inputs, :outputs, :confirmations, :fee_override, :version, :lock_time
+    attr_accessor :native # Some may disagree with this. Let's talk about it.
 
-    # A new Transaction contains no inputs or outputs; these can be added with
-    # #add_input and #add_output.
-    # FIXME:  version and locktime options are ignored here.
-    def initialize(options={}, &block)
+    def initialize(fee: nil, confirmations: nil, version: nil, lock_time: nil, &block)
+      @version, @lock_time, @fee_override, @confirmations = version, lock_time, fee, confirmations
+      @inputs, @outputs = [], []
       @native = Bitcoin::Protocol::Tx.new
-      @inputs = []
-      @outputs = []
-      @fee_override = options[:fee]
-      @confirmations = options[:confirmations]
       update(&block) if block
     end
-
-    # Update the "native" bitcoin-ruby instances for the transaction and
-    # all its inputs.  Will be removed when we rework the wrapper classes
-    # to be lazy, rather than eager.
-    def update_native
-      yield @native if block_given?
-      @native = Bitcoin::Protocol::Tx.new(@native.to_payload)
-      inputs.each_with_index do |input, i|
-        # Using instance_eval here because I really don't want to expose
-        # Input#native=.  As we consume more and more of the native
-        # functionality, we can dispense with such ugliness.
-        # --->> I am going to disagree and say it's okay to expose this. Nothing's private in ruby anyway.
-        input.native = @native.inputs[i]
-        # TODO: is this re-nativization necessary for outputs, too?
-      end
-    end
-
     # Monkeypatch to remove a test that fails because bitcoin-ruby thinks a
     # transaction doesn't have valid syntax when it contains a coinbase input.
     Bitcoin::Validation::Tx::RULES[:syntax].delete(:inputs)
 
     # Validate that the transaction is plausibly signable.
+    InvalidNativeSyntaxError = Class.new(StandardError)
     def validate_syntax
-      update_native
       validator = Bitcoin::Validation::Tx.new(@native, nil)
-      valid = validator.validate rules: [:syntax]
-      { valid: valid, error: validator.error }
+      unless validator.validate(rules: [:syntax])
+        raise InvalidNativeSyntaxError, validator.error.to_json
+      end
     end
 
     # Verify that the script_sigs for all inputs are valid.
@@ -159,37 +115,27 @@ module CoinOp::Bit
       end
 
       @inputs << input
-      update_native do |native|
-        native.add_in input.native
-      end
+      @native.add_in(input.native)
       input
     end
 
     # Takes either an Output or a Hash describing an output.
     def add_output(output)
       unless output.is_a? Output
-        output = Output.new(output)
+        output = Output.new(output.merge(transaction: self, index: @outputs.size))
       end
-
-      index = @outputs.size
-      # TODO: stop using set_transaction and just pass self to Output.new
-      # Then remove output.set_transaction
-      output.set_transaction self, index
       @outputs << output
-      self.update_native do |native|
-        native.add_out(output.native)
-      end
+      @native.add_out(output.native)
+      output
     end
 
     # Returns the transaction hash as a string of bytes.
     def binary_hash
-      update_native
       @native.binary_hash
     end
 
     # Returns the transaction hash encoded as hex
     def hex_hash
-      update_native
       @native.hash
     end
 
@@ -263,10 +209,7 @@ module CoinOp::Bit
     # of multisig situations.
     def set_script_sigs(*input_args, &block)
       # No sense trying to authorize when the transaction isn't usable.
-      report = validate_syntax
-      unless report[:valid] == tru
-        raise "Invalid syntax:  #{report[:errors].to_json}"
-      end
+      validate_syntax
 
       # Array#zip here allows us to iterate over the inputs in lockstep with any
       # number of sets of values.
