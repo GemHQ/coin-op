@@ -49,16 +49,15 @@ module CoinOp::Bit
     # Construct a transaction from an instance of ::Bitcoin::Protocol::Tx
     def self.native(tx)
       transaction = new
-      # TODO: reconsider use of instance_eval
-      transaction.instance_eval do
-        @native = tx
-        @inputs = tx.inputs.collect do |input|
+      transaction.update do |update|
+        update.native = tx
+        update.inputs = tx.inputs.collect do |input|
           # We use SparseInput because it does not require the retrieval
           # of the previous output.  Its functionality should probably be
           # folded into the Input class.
           SparseInput.new(input.prev_out, input.prev_out_index)
         end
-        @outputs = tx.outputs.each_with_index.map do |output, i|
+        update.outputs = tx.outputs.each_with_index.map do |output, i|
           Output.new(
             transaction: transaction,
             index: i,
@@ -73,6 +72,15 @@ module CoinOp::Bit
         raise "Invalid syntax:  #{report[:error].to_json}"
       end
       transaction
+    end
+
+    TransactionUpdater = Struct.new(:native, :inputs, :outputs)
+    def update(&block)
+      t = TransactionUpdater.new
+      block.call(t)
+      @native = t.native
+      @inputs = t.inputs
+      @outputs = t.outputs
     end
 
     # Preparation for interface change, where the from_foo methods become
@@ -92,12 +100,13 @@ module CoinOp::Bit
     # A new Transaction contains no inputs or outputs; these can be added with
     # #add_input and #add_output.
     # FIXME:  version and locktime options are ignored here.
-    def initialize(options={})
+    def initialize(options={}, &block)
       @native = Bitcoin::Protocol::Tx.new
       @inputs = []
       @outputs = []
       @fee_override = options[:fee]
       @confirmations = options[:confirmations]
+      update(&block) if block
     end
 
     # Update the "native" bitcoin-ruby instances for the transaction and
@@ -107,13 +116,11 @@ module CoinOp::Bit
       yield @native if block_given?
       @native = Bitcoin::Protocol::Tx.new(@native.to_payload)
       inputs.each_with_index do |input, i|
-        native = @native.inputs[i]
+        native_input = @native.inputs[i]
         # Using instance_eval here because I really don't want to expose
         # Input#native=.  As we consume more and more of the native
         # functionality, we can dispense with such ugliness.
-        input.instance_eval do
-          @native = native
-        end
+        input.native_with_confidence = native_input
         # TODO: is this re-nativization necessary for outputs, too?
       end
     end
@@ -256,7 +263,7 @@ module CoinOp::Bit
     def set_script_sigs(*input_args, &block)
       # No sense trying to authorize when the transaction isn't usable.
       report = validate_syntax
-      unless report[:valid] == true
+      unless report[:valid] == tru
         raise "Invalid syntax:  #{report[:errors].to_json}"
       end
 

@@ -39,6 +39,10 @@ module CoinOp::Bit
       @signatures = []
     end
 
+    def native_with_confidence=(native)
+      @native = native
+    end
+
     # Set the sig_hash (the digest used in signing) for this input using a
     # string of bytes.
     def binary_sig_hash=(blob)
