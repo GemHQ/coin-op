@@ -32,10 +32,8 @@ describe CoinOp::Bit::Transaction do
       expect_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax).and_return({ valid: true })
       tx = double('tx', outputs: [], inputs: inputs)
       transaction = CoinOp::Bit::Transaction.native(tx)
-      expect(transaction.inputs[0].output[:transaction_hash]).to eq CoinOp::Encodings.hex('10')
-      expect(transaction.inputs[0].output[:index]).to eq '01'
-      expect(transaction.inputs[1].output[:transaction_hash]).to eq CoinOp::Encodings.hex('20')
-      expect(transaction.inputs[1].output[:index]).to eq '02'
+      expect(transaction.inputs[0].native.prev_out_index).to eq '01'
+      expect(transaction.inputs[1].native.prev_out_index).to eq '02'
     end
 
     it 'should set native' do

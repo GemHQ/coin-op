@@ -51,13 +51,14 @@ module CoinOp::Bit
       transaction = new
       transaction.update do |update|
         update.native = tx
-        update.inputs = tx.inputs.collect do |input|
-          # We use SparseInput because it does not require the retrieval
-          # of the previous output.  Its functionality should probably be
-          # folded into the Input class.
-          SparseInput.new(input.prev_out, input.prev_out_index)
+        update.inputs = tx.inputs.each_with_index.collect do |input, i|
+          Input.new_without_output(
+              index: i,
+              prev_transaction_hash: input.prev_out,
+              prev_out_index: input.prev_out_index
+          )
         end
-        update.outputs = tx.outputs.each_with_index.map do |output, i|
+        update.outputs = tx.outputs.each_with_index.collect do |output, i|
           Output.new(
             transaction: transaction,
             index: i,
@@ -116,11 +117,11 @@ module CoinOp::Bit
       yield @native if block_given?
       @native = Bitcoin::Protocol::Tx.new(@native.to_payload)
       inputs.each_with_index do |input, i|
-        native_input = @native.inputs[i]
         # Using instance_eval here because I really don't want to expose
         # Input#native=.  As we consume more and more of the native
         # functionality, we can dispense with such ugliness.
-        input.native_with_confidence = native_input
+        # --->> I am going to disagree and say it's okay to expose this. Nothing's private in ruby anyway.
+        input.native = @native.inputs[i]
         # TODO: is this re-nativization necessary for outputs, too?
       end
     end
@@ -154,7 +155,7 @@ module CoinOp::Bit
     #
     def add_input(input)
       unless input.is_a? Input
-        input = Input.new(input.merge(transaction: self, index: @inputs.size))
+        input = Input.new_with_output(input.merge(transaction: self, index: @inputs.size))
       end
 
       @inputs << input
