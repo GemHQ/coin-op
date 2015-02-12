@@ -126,15 +126,14 @@ module CoinOp::Bit
     def validate_syntax
       update_native
       validator = Bitcoin::Validation::Tx.new(@native, nil)
-      valid = validator.validate :rules => [:syntax]
-      {:valid => valid, :error => validator.error}
+      valid = validator.validate rules: [:syntax]
+      { valid: valid, error: validator.error }
     end
 
     # Verify that the script_sigs for all inputs are valid.
     def validate_script_sigs
       bad_inputs = inputs.each_with_index.map do |input, index|
         # TODO: confirm whether we need to mess with the block_timestamp arg
-
         index unless native.verify_input_signature(index, input.output.transaction.native)
       end.compact
       { valid: bad_inputs.empty?, inputs: bad_inputs }

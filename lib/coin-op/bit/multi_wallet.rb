@@ -7,9 +7,9 @@ module CoinOp::Bit
     include CoinOp::Encodings
 
     NetworkMap = {
-      :testnet3 => :bitcoin_testnet,
-      :bitcoin_testnet => :bitcoin_testnet,
-      :bitcoin => :bitcoin
+      testnet3: :bitcoin_testnet,
+      bitcoin_testnet: :bitcoin_testnet,
+      bitcoin: :bitcoin
     }
 
     def self.generate(names, network_name=:testnet3)

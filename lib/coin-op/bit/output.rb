@@ -72,12 +72,12 @@ module CoinOp::Bit
 
     def to_hash
       {
-        :transaction_hash => self.transaction_hash,
-        :index => self.index,
-        :value => self.value,
-        :script => self.script,
-        :address => self.address,
-        :metadata => self.metadata
+        transaction_hash: self.transaction_hash,
+        index: self.index,
+        value: self.value,
+        script: self.script,
+        address: self.address,
+        metadata: self.metadata
       }
     end
 
