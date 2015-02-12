@@ -27,7 +27,7 @@ module CoinOp::Bit
       #FIXME: we're not handling sig_scripts for already signed inputs.
 
       inputs.each do |data|
-        transaction.add_input_from_hash(data)
+        transaction.add_input(data)
 
         ## FIXME: verify that the supplied and computed sig_hashes match
         #puts :sig_hashes_match => (data[:sig_hash] == input.sig_hash)
@@ -139,10 +139,6 @@ module CoinOp::Bit
       { valid: bad_inputs.empty?, inputs: bad_inputs }
     end
 
-    def add_input_from_hash(input)
-      add_input(Input.new(input.merge(transaction: self, index: @inputs.size)))
-    end
-
     # Takes one of
     #
     # * an instance of Input
@@ -150,6 +146,10 @@ module CoinOp::Bit
     # * a Hash describing an Output
     #
     def add_input(input)
+      unless input.is_a? Input
+        input = Input.new(input.merge(transaction: self, index: @inputs.size))
+      end
+
       @inputs << input
       update_native do |native|
         native.add_in input.native
