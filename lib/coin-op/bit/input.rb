@@ -9,6 +9,7 @@ module CoinOp::Bit
       :signatures, :sig_hash, :script_sig, :index, :transaction
 
     def self.new_with_output(index:, transaction:, output:, script_sig_asm: nil)
+      output = Output.new(output) unless output.is_a? Output
       native = Bitcoin::Protocol::TxIn.new
 
       # TODO: the reverse is cargo-culted from a function in bitcoin-ruby

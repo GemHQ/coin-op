@@ -38,12 +38,14 @@ module CoinOp::Bit
       new(native: tx, inputs: tx.inputs, outputs: tx.outputs)
     end
 
-    attr_reader :native, :inputs, :outputs, :confirmations, :fee_override, :version, :lock_time
+    attr_reader :native, :inputs, :outputs, :confirmations, :fee_override, :version, :lock_time, :tx_hash
 
     def initialize(native: Bitcoin::Protocol::Tx.new, inputs:, outputs:,
-                   fee: 0, confirmations: 0, version: CURRENT_VERSION, lock_time: 0)
+                   fee: 0, confirmations: 0, version: CURRENT_VERSION,
+                   lock_time: 0, tx_hash: nil)
       @inputs, @outputs = [], []
-      @version, @lock_time, @fee_override, @confirmations = version, lock_time, fee, confirmations
+      @version, @lock_time, @tx_hash = version, lock_time, tx_hash
+      @fee_override, @confirmations = fee, confirmations
       @native = native
       inputs.each { |i| add_input(i) }
       outputs.each { |i| add_output(i) }

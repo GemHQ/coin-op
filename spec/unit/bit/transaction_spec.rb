@@ -112,13 +112,14 @@ describe CoinOp::Bit::Transaction do
 
   describe '#Input' do
     let(:tx) { CoinOp::Bit::Transaction.from_data(outputs: []) }
+    let(:address) { '1BYX25TtdZSwUCQqmwonLTEdj6ceamNg96' }
     before do
       allow_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax)
     end
 
     context 'when input is hash' do
       it 'should produce correct input' do
-        output = double('output', index: 1, transaction_hash: 'aaa')
+        output = { index: 1, transaction_hash: 'aaa', address: address, value: 100 }
         expect(tx).to receive(:inputs).and_return double('inputs', size: 5)
         input = tx.Input({ output: output })
         expect(input.index).to eq 5
