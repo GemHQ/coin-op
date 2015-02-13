@@ -4,8 +4,8 @@ module CoinOp::Bit
   class Output
     include CoinOp::Encodings
 
-    attr_accessor :metadata
-    attr_reader :native, :transaction, :index, :value, :script
+    attr_accessor :metadata, :transaction, :index
+    attr_reader :native, :value, :script
 
     # Takes a Hash with required keys:
     #
@@ -56,9 +56,10 @@ module CoinOp::Bit
     end
 
     def with_transaction_and_index(transaction, index)
-      @transaction = transaction
-      @index = index
-      self
+      duped = dup
+      duped.transaction = transaction
+      duped.index = index
+      duped
     end
 
     def to_hash

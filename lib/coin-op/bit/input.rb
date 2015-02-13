@@ -8,6 +8,8 @@ module CoinOp::Bit
     attr_reader :native, :output, :binary_sig_hash,
       :signatures, :sig_hash, :script_sig, :index, :transaction
 
+    attr_accessor :transaction, :index
+
     def self.new_with_output(index:, transaction:, output:, script_sig_asm: nil)
       output = Output.new(output) unless output.is_a? Output
       native = Bitcoin::Protocol::TxIn.new
@@ -38,9 +40,10 @@ module CoinOp::Bit
     end
 
     def with_transaction_and_index(transaction, index)
-      @transaction = transaction
-      @index = index
-      self
+      duped = dup
+      duped.transaction = transaction
+      duped.index = index
+      duped
     end
 
     # Set the sig_hash (the digest used in signing) for this input using a
