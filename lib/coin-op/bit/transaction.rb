@@ -2,6 +2,7 @@ module CoinOp::Bit
 
   class Transaction
     include CoinOp::Encodings
+    CURRENT_VERSION = 1
 
     DeprecationError = Class.new(StandardError)
     def self.build
@@ -10,7 +11,8 @@ module CoinOp::Bit
 
     # Construct a Transaction from a data structure of nested Hashes
     # and Arrays.
-    def self.from_data(outputs:, confirmations: nil, fee: nil, inputs: [], version: nil, lock_time: nil)
+    def self.from_data(outputs:, confirmations: 0, fee: 0, inputs: [],
+                      version: CURRENT_VERSION, lock_time: 0)
       new(fee: fee, version: version, lock_time: lock_time, confirmations: confirmations ) do |t|
         t.inputs = inputs
         t.outputs = outputs
@@ -62,7 +64,7 @@ module CoinOp::Bit
 
     attr_reader :native, :inputs, :outputs, :confirmations, :fee_override, :version, :lock_time
 
-    def initialize(fee: nil, confirmations: nil, version: nil, lock_time: nil, &block)
+    def initialize(fee: 0, confirmations: 0, version: CURRENT_VERSION, lock_time: 0, &block)
       @version, @lock_time, @fee_override, @confirmations = version, lock_time, fee, confirmations
       @inputs, @outputs = [], []
       @native = Bitcoin::Protocol::Tx.new
