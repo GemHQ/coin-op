@@ -7,18 +7,18 @@ describe CoinOp::Bit::Transaction do
   describe '.from_native' do
     let(:inputs) do
       [
-        double('input', prev_out: '01', prev_out_index: '01'),
-        double('input', prev_out: '02', prev_out_index: '02')
+          Bitcoin::Protocol::TxIn.new('01', '01'),
+          Bitcoin::Protocol::TxIn.new('02', '02')
       ]
     end
     let(:outputs) do
       [
-        double('output', value: '5', pk_script: '5'),
-        double('output', value: '6', pk_script: '6')
+          Bitcoin::Protocol::TxOut.new('5', nil, '5'),
+          Bitcoin::Protocol::TxOut.new('6', nil, '6')
       ]
     end
     it 'should set outputs' do
-      tx = spy('tx', outputs: outputs, inputs: [])
+      tx = instance_spy('Bitcoin::Protocol::Tx', outputs: outputs, inputs: [])
       transaction = CoinOp::Bit::Transaction.from_native(tx)
       expect(transaction.outputs[0].transaction).to eq transaction
       expect(transaction.outputs[0].index).to eq 0

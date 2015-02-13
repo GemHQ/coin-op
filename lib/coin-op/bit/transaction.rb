@@ -13,10 +13,14 @@ module CoinOp::Bit
     # and Arrays.
     def self.from_data(outputs:, confirmations: 0, fee: 0, inputs: [],
                       version: CURRENT_VERSION, lock_time: 0)
-      new(fee: fee, version: version, lock_time: lock_time, confirmations: confirmations ) do |t|
-        t.inputs = inputs
-        t.outputs = outputs
-      end
+      new(
+        fee: fee,
+        version: version,
+        lock_time: lock_time,
+        confirmations: confirmations,
+        inputs: inputs,
+        outputs: outputs
+      )
     end
 
     # Construct a Transaction from raw bytes.
@@ -31,44 +35,20 @@ module CoinOp::Bit
 
     # Construct a transaction from an instance of ::Bitcoin::Protocol::Tx
     def self.from_native(tx)
-      new do |updater, transaction|
-        updater.native = tx
-        updater.inputs = tx.inputs.each_with_index.collect do |input, i|
-          Input.new_without_output(
-            index: i,
-            prev_transaction_hash: input.prev_out,
-            prev_out_index: input.prev_out_index
-          )
-        end
-        updater.outputs = tx.outputs.each_with_index.collect do |output, i|
-          Output.new(
-            transaction: transaction,
-            index: i,
-            value: output.value,
-            script: { blob: output.pk_script }
-          )
-        end
-      end
+      new(native: tx, inputs: tx.inputs, outputs: tx.outputs)
     end
 
-    TransactionUpdater = Struct.new(:native, :inputs, :outputs)
-    def update(&block)
-      t = TransactionUpdater.new
-      block.call(t, self)
-      @native = t.native if t.native
-      t.inputs.each { |i| add_input(i) }
-      t.outputs.each { |i| add_output(i) }
-      validate_syntax
-      self
-    end
 
     attr_reader :native, :inputs, :outputs, :confirmations, :fee_override, :version, :lock_time
 
-    def initialize(fee: 0, confirmations: 0, version: CURRENT_VERSION, lock_time: 0, &block)
-      @version, @lock_time, @fee_override, @confirmations = version, lock_time, fee, confirmations
+    def initialize(native: Bitcoin::Protocol::Tx.new, inputs:, outputs:,
+                   fee: 0, confirmations: 0, version: CURRENT_VERSION, lock_time: 0)
       @inputs, @outputs = [], []
-      @native = Bitcoin::Protocol::Tx.new
-      update(&block) if block
+      @version, @lock_time, @fee_override, @confirmations = version, lock_time, fee, confirmations
+      @native = native
+      Inputs(inputs).each { |i| add_input(i) }
+      Outputs(outputs).each { |i| add_output(i) }
+      validate_syntax
     end
     # Monkeypatch to remove a test that fails because bitcoin-ruby thinks a
     # transaction doesn't have valid syntax when it contains a coinbase input.
@@ -92,27 +72,15 @@ module CoinOp::Bit
       { valid: bad_inputs.empty?, inputs: bad_inputs }
     end
 
-    # Takes one of
-    #
-    # * an instance of Input
-    # * an instance of Output
-    # * a Hash describing an Output
-    #
     def add_input(input)
-      unless input.is_a? Input
-        input = Input.new_with_output(input.merge(transaction: self, index: @inputs.size))
-      end
-
+      input = Input(input)
       @inputs << input
       @native.add_in(input.native)
       input
     end
 
-    # Takes either an Output or a Hash describing an output.
     def add_output(output)
-      unless output.is_a? Output
-        output = Output.new(output.merge(transaction: self, index: @outputs.size))
-      end
+      output = Output(output)
       @outputs << output
       @native.add_out(output.native)
       output
@@ -282,6 +250,57 @@ module CoinOp::Bit
       )
     end
 
+    private
+
+    def Outputs(initials)
+      initials.each_with_index.map do |initial, i|
+        Output(initial, i)
+      end
+    end
+
+    def Output(initial, index=@outputs.size)
+      case initial
+        when Output then initial
+        when Bitcoin::Protocol::TxOut
+          Output.new(
+              transaction: self,
+              index: index,
+              value: initial.value,
+              script: { blob: initial.pk_script }
+          )
+        when Hash
+          Output.new(initial.merge(transaction: self, index: index))
+        else
+          raise TypeError, "Can't convert #{initial.inspect} to Output."
+      end
+    end
+
+    def Inputs(initials)
+      initials.each_with_index.map do |initial, i|
+        Input(initial, i)
+      end
+    end
+
+    def Input(initial, index=@inputs.size)
+      case initial
+        when Input then initial
+        when Bitcoin::Protocol::TxIn
+          Input.new_without_output(
+              index: index,
+              prev_transaction_hash: initial.prev_out,
+              prev_out_index: initial.prev_out_index
+          )
+        when Hash
+          Input.new_with_output(
+              initial.merge(
+                  transaction: self,
+                  index: index
+              )
+          )
+        else
+          raise TypeError, "Can't convert #{initial.inspect} to Input"
+      end
+    end
   end
 
 end
