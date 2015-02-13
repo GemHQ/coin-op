@@ -5,10 +5,8 @@ module CoinOp::Bit
 
     include CoinOp::Encodings
 
-    attr_reader :output, :binary_sig_hash,
+    attr_reader :native, :output, :binary_sig_hash,
       :signatures, :sig_hash, :script_sig, :index
-
-    attr_accessor :native
 
     def self.new_with_output(index:, transaction:, output:, script_sig_asm: nil)
       output = Output.new(output) unless output.is_a? Output

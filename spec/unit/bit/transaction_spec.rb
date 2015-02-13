@@ -4,7 +4,7 @@ describe CoinOp::Bit::Transaction do
   before do
     allow_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax)
   end
-  describe '.native' do
+  describe '.from_native' do
     let(:inputs) do
       [
         double('input', prev_out: '01', prev_out_index: '01'),
@@ -19,7 +19,7 @@ describe CoinOp::Bit::Transaction do
     end
     it 'should set outputs' do
       tx = spy('tx', outputs: outputs, inputs: [])
-      transaction = CoinOp::Bit::Transaction.native(tx)
+      transaction = CoinOp::Bit::Transaction.from_native(tx)
       expect(transaction.outputs[0].transaction).to eq transaction
       expect(transaction.outputs[0].index).to eq 0
       expect(transaction.outputs[0].value).to eq '5'
@@ -32,14 +32,14 @@ describe CoinOp::Bit::Transaction do
 
     it 'should set inputs' do
       tx = spy('tx', outputs: [], inputs: inputs)
-      transaction = CoinOp::Bit::Transaction.native(tx)
+      transaction = CoinOp::Bit::Transaction.from_native(tx)
       expect(transaction.inputs[0].native.prev_out_index).to eq '01'
       expect(transaction.inputs[1].native.prev_out_index).to eq '02'
     end
 
     it 'should set native' do
       tx = spy('tx', outputs: outputs, inputs: inputs)
-      transaction = CoinOp::Bit::Transaction.native(tx)
+      transaction = CoinOp::Bit::Transaction.from_native(tx)
       expect(transaction.native).to eq tx
     end
 
@@ -47,14 +47,14 @@ describe CoinOp::Bit::Transaction do
       it 'should raise error' do
         expect_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax).and_raise(CoinOp::Bit::Transaction::InvalidNativeSyntaxError)
         tx = spy('tx', outputs: outputs, inputs: inputs)
-        expect { CoinOp::Bit::Transaction.native(tx) }.to raise_error(CoinOp::Bit::Transaction::InvalidNativeSyntaxError)
+        expect { CoinOp::Bit::Transaction.from_native(tx) }.to raise_error(CoinOp::Bit::Transaction::InvalidNativeSyntaxError)
       end
     end
   end
 
-  describe '.data' do
+  describe '.from_data' do
     it 'should set fee, confirmations' do
-      tx = CoinOp::Bit::Transaction.data(fee: 2, confirmations: 1, outputs: [])
+      tx = CoinOp::Bit::Transaction.from_data(fee: 2, confirmations: 1, outputs: [])
       expect(tx.fee_override).to eq 2
       expect(tx.confirmations).to eq 1
     end
@@ -66,7 +66,7 @@ describe CoinOp::Bit::Transaction do
           { output: output1 },
           { output: output2 }
       ]
-      tx = CoinOp::Bit::Transaction.data(inputs: inputs, outputs: [])
+      tx = CoinOp::Bit::Transaction.from_data(inputs: inputs, outputs: [])
       expect(tx.inputs[0].output.index).to eq 42
       expect(tx.inputs[1].output.index).to eq 43
       expect(tx.inputs.size).to eq 2
@@ -77,7 +77,7 @@ describe CoinOp::Bit::Transaction do
           { index: 108, value: 5, transaction_hash: 'hash1', address: '37oUcVHj6yC1rk9YyQrJioW36U24UxP6YR' },
           { index: 109, value: 6, transaction_hash: 'hash2', address: '37oUcVHj6yC1rk9YyQrJioW36U24UxP6YR' }
       ]
-      tx = CoinOp::Bit::Transaction.data(outputs: outputs)
+      tx = CoinOp::Bit::Transaction.from_data(outputs: outputs)
       expect(tx.outputs[0].script).to eq CoinOp::Bit::Script.new(address: '37oUcVHj6yC1rk9YyQrJioW36U24UxP6YR')
       expect(tx.outputs[1].script).to eq CoinOp::Bit::Script.new(address: '37oUcVHj6yC1rk9YyQrJioW36U24UxP6YR')
       expect(tx.outputs.size).to eq 2
@@ -89,7 +89,7 @@ describe CoinOp::Bit::Transaction do
        it 'should return valid false and array of invalids' do
          native = double('native')
          inputs = [spy('input')] * 3
-         tx = CoinOp::Bit::Transaction.data(outputs: [])
+         tx = CoinOp::Bit::Transaction.from_data(outputs: [])
          expect(native).to receive(:verify_input_signature).and_return(false, true, false)
          tx.instance_variable_set(:@native, native)
          expect(tx).to receive(:inputs).and_return inputs
@@ -101,7 +101,7 @@ describe CoinOp::Bit::Transaction do
       it 'should return valid true and empty array' do
         native = double('native')
         inputs = [spy('input')] * 3
-        tx = CoinOp::Bit::Transaction.data(outputs: [])
+        tx = CoinOp::Bit::Transaction.from_data(outputs: [])
         expect(native).to receive(:verify_input_signature).and_return(true, true, true)
         tx.instance_variable_set(:@native, native)
         expect(tx).to receive(:inputs).and_return inputs

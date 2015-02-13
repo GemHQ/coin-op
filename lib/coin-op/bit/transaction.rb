@@ -8,14 +8,9 @@ module CoinOp::Bit
       raise DeprecationError
     end
 
-    # Preparation for interface change, where the from_foo methods become
-    # preferred, and the terser method names are deprecated.
-    #
-    # This nasty little construct allows us to work on the class's metaclass.
-
     # Construct a Transaction from a data structure of nested Hashes
     # and Arrays.
-    def self.data(outputs:, confirmations: nil, fee: nil, inputs: [], version: nil, lock_time: nil)
+    def self.from_data(outputs:, confirmations: nil, fee: nil, inputs: [], version: nil, lock_time: nil)
       new(fee: fee, version: version, lock_time: lock_time, confirmations: confirmations ) do |t|
         t.inputs = inputs
         t.outputs = outputs
@@ -23,17 +18,17 @@ module CoinOp::Bit
     end
 
     # Construct a Transaction from raw bytes.
-    def self.raw(raw_tx)
-      self.native(::Bitcoin::Protocol::Tx.new(raw_tx))
+    def self.from_raw(raw_tx)
+      self.from_native(::Bitcoin::Protocol::Tx.new(raw_tx))
     end
 
     # Construct a Transaction from a hex representation of the raw bytes.
-    def self.hex(hex)
+    def self.from_hex(hex)
       self.from_bytes(CoinOp::Encodings.decode_hex(hex))
     end
 
     # Construct a transaction from an instance of ::Bitcoin::Protocol::Tx
-    def self.native(tx)
+    def self.from_native(tx)
       new do |updater, transaction|
         updater.native = tx
         updater.inputs = tx.inputs.each_with_index.collect do |input, i|
@@ -54,13 +49,6 @@ module CoinOp::Bit
       end
     end
 
-    class << self
-      alias_method :from_data, :data
-      alias_method :from_hex, :hex
-      alias_method :from_bytes, :raw
-      alias_method :from_native, :native
-    end
-
     TransactionUpdater = Struct.new(:native, :inputs, :outputs)
     def update(&block)
       t = TransactionUpdater.new
@@ -72,8 +60,7 @@ module CoinOp::Bit
       self
     end
 
-    attr_reader :inputs, :outputs, :confirmations, :fee_override, :version, :lock_time
-    attr_accessor :native # Some may disagree with this. Let's talk about it.
+    attr_reader :native, :inputs, :outputs, :confirmations, :fee_override, :version, :lock_time
 
     def initialize(fee: nil, confirmations: nil, version: nil, lock_time: nil, &block)
       @version, @lock_time, @fee_override, @confirmations = version, lock_time, fee, confirmations
