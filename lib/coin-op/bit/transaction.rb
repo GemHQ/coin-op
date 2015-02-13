@@ -38,7 +38,6 @@ module CoinOp::Bit
       new(native: tx, inputs: tx.inputs, outputs: tx.outputs)
     end
 
-
     attr_reader :native, :inputs, :outputs, :confirmations, :fee_override, :version, :lock_time
 
     def initialize(native: Bitcoin::Protocol::Tx.new, inputs:, outputs:,
@@ -46,8 +45,8 @@ module CoinOp::Bit
       @inputs, @outputs = [], []
       @version, @lock_time, @fee_override, @confirmations = version, lock_time, fee, confirmations
       @native = native
-      Inputs(inputs).each { |i| add_input(i) }
-      Outputs(outputs).each { |i| add_output(i) }
+      inputs.each { |i| add_input(i) }
+      outputs.each { |i| add_output(i) }
       validate_syntax
     end
     # Monkeypatch to remove a test that fails because bitcoin-ruby thinks a
@@ -250,17 +249,11 @@ module CoinOp::Bit
       )
     end
 
-    private
 
-    def Outputs(initials)
-      initials.each_with_index.map do |initial, i|
-        Output(initial, i)
-      end
-    end
-
-    def Output(initial, index=@outputs.size)
+    def Output(initial)
+      index = outputs.size
       case initial
-        when Output then initial
+        when Output then initial.with_transaction_and_index(self, index)
         when Bitcoin::Protocol::TxOut
           Output.new(
               transaction: self,
@@ -269,26 +262,27 @@ module CoinOp::Bit
               script: { blob: initial.pk_script }
           )
         when Hash
-          Output.new(initial.merge(transaction: self, index: index))
+          Output.new(
+              initial.merge(
+                  transaction: self,
+                  index: index
+              )
+          )
         else
           raise TypeError, "Can't convert #{initial.inspect} to Output."
       end
     end
 
-    def Inputs(initials)
-      initials.each_with_index.map do |initial, i|
-        Input(initial, i)
-      end
-    end
-
-    def Input(initial, index=@inputs.size)
+    def Input(initial)
+      index = inputs.size
       case initial
-        when Input then initial
+        when Input then initial.with_transaction_and_index(self, index)
         when Bitcoin::Protocol::TxIn
           Input.new_without_output(
               index: index,
               prev_transaction_hash: initial.prev_out,
-              prev_out_index: initial.prev_out_index
+              prev_out_index: initial.prev_out_index,
+              transaction: self
           )
         when Hash
           Input.new_with_output(

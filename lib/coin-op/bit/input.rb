@@ -6,10 +6,9 @@ module CoinOp::Bit
     include CoinOp::Encodings
 
     attr_reader :native, :output, :binary_sig_hash,
-      :signatures, :sig_hash, :script_sig, :index
+      :signatures, :sig_hash, :script_sig, :index, :transaction
 
     def self.new_with_output(index:, transaction:, output:, script_sig_asm: nil)
-      output = Output.new(output) unless output.is_a? Output
       native = Bitcoin::Protocol::TxIn.new
 
       # TODO: the reverse is cargo-culted from a function in bitcoin-ruby
@@ -22,19 +21,25 @@ module CoinOp::Bit
           output: output, script_sig_asm: script_sig_asm)
     end
 
-    def self.new_without_output(prev_transaction_hash:, prev_out_index:, index:)
+    def self.new_without_output(prev_transaction_hash:, prev_out_index:, index:, transaction:)
       native = Bitcoin::Protocol::TxIn.new
       native.prev_out = CoinOp::Encodings.decode_hex(prev_transaction_hash).reverse
       native.prev_out_index = prev_out_index
-      new(index: index, native: native)
+      new(index: index, native: native, transaction: transaction)
     end
 
-    def initialize(index:, native:, transaction: nil, output: nil, script_sig_asm: nil)
+    def initialize(index:, native:, transaction:, output: nil, script_sig_asm: nil)
       @native, @index, @transaction, @output = native, index, transaction, output
       @signatures = []
       if script_sig_asm
         @script_sig = Bitcoin::Script.binary_from_string(script_sig_asm)
       end
+    end
+
+    def with_transaction_and_index(transaction, index)
+      @transaction = transaction
+      @index = index
+      self
     end
 
     # Set the sig_hash (the digest used in signing) for this input using a

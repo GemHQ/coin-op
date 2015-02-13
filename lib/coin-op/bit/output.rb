@@ -55,6 +55,11 @@ module CoinOp::Bit
       @transaction ? @transaction.hex_hash : @transaction_hash
     end
 
+    def with_transaction_and_index(transaction, index)
+      @transaction = transaction
+      @index = index
+      self
+    end
 
     def to_hash
       {

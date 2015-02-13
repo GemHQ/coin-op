@@ -109,4 +109,99 @@ describe CoinOp::Bit::Transaction do
       end
     end
   end
+
+  describe '#Input' do
+    let(:tx) { CoinOp::Bit::Transaction.from_data(outputs: []) }
+    before do
+      allow_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax)
+    end
+
+    context 'when input is hash' do
+      it 'should produce correct input' do
+        output = double('output', index: 1, transaction_hash: 'aaa')
+        expect(tx).to receive(:inputs).and_return double('inputs', size: 5)
+        input = tx.Input({ output: output })
+        expect(input.index).to eq 5
+        expect(input.transaction).to eq tx
+        expect(input.native.prev_out).to eq tx.decode_hex('aaa').reverse
+        expect(input.native.prev_out_index).to eq 1
+      end
+    end
+
+    context 'when input is Bitcoin::Protocol:TxIn' do
+      it 'should produce correct input' do
+        expect(tx).to receive(:inputs).and_return double('inputs', size: 7)
+        initial = Bitcoin::Protocol::TxIn.new('aaa', 5)
+        input = tx.Input(initial)
+        expect(input.index).to eq 7
+        expect(input.transaction).to eq tx
+        expect(input.native.prev_out_index).to eq 5
+        expect(input.native.prev_out).to eq tx.decode_hex('aaa').reverse
+      end
+    end
+
+    context 'when input is Input' do
+      it 'should update indices' do
+        expect(tx).to receive(:inputs).and_return double('inputs', size: 11)
+        initial = CoinOp::Bit::Input.new(
+            index: 10,
+            native: 'native',
+            transaction: 'something'
+        )
+        input = tx.Input(initial)
+        expect(input.index).to eq 11
+        expect(input.transaction).to eq tx
+      end
+    end
+
+    context 'when input is not recognized' do
+      it 'should throw type error' do
+        expect { tx.Input([]) }.to raise_error TypeError
+      end
+    end
+  end
+
+  describe '#Output' do
+    let(:tx) { CoinOp::Bit::Transaction.from_data(outputs: []) }
+    let(:address) { '1BYX25TtdZSwUCQqmwonLTEdj6ceamNg96' }
+    before do
+      allow_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax)
+    end
+    context 'when output is a hash' do
+      it 'should return correct output' do
+        initial = { value: 10, index: 104, transaction: 'aha', address: address }
+        expect(tx).to receive(:outputs).and_return double('outputs', size: 100)
+        output = tx.Output(initial)
+        expect(output.index).to eq 100
+        expect(output.transaction).to eq tx
+        expect(output.value).to eq 10
+        expect(output.script).to eq CoinOp::Bit::Script.new(address: address)
+      end
+    end
+    context 'when output is an Output' do
+      it 'should return correct output' do
+        initial = CoinOp::Bit::Output.new(value: 109, index: 110, transaction: 'wut', address: address)
+        expect(tx).to receive(:outputs).and_return double('outputs', size: 56)
+        output = tx.Output(initial)
+        expect(output.index).to eq 56
+        expect(output.transaction).to eq tx
+        expect(output.value).to eq 109
+      end
+    end
+    context 'when output is a Bitcoin::Protocol::TxOut' do
+      it 'should return correct output' do
+        initial = Bitcoin::Protocol::TxOut.new(100, nil, 'something')
+        expect(tx).to receive(:outputs).and_return double('outputs', size: 89)
+        output = tx.Output(initial)
+        expect(output.index).to eq 89
+        expect(output.transaction).to eq tx
+        expect(output.value).to eq 100
+      end
+    end
+    context 'when output is weird' do
+      it 'should throw an error' do
+        expect { tx.Output([]) }.to raise_error TypeError
+      end
+    end
+  end
 end
