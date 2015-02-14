@@ -86,14 +86,14 @@ describe CoinOp::Bit::Transaction do
 
   describe '#validate_script_sigs' do
      context 'when one is invalid' do
-       it 'should return valid false and array of invalids' do
+       it 'should raise InvalidSignaturesError with bad ones' do
          native = double('native')
          inputs = [spy('input')] * 3
          tx = CoinOp::Bit::Transaction.from_data(outputs: [])
          expect(native).to receive(:verify_input_signature).and_return(false, true, false)
          tx.instance_variable_set(:@native, native)
          expect(tx).to receive(:inputs).and_return inputs
-         expect(tx.validate_script_sigs).to eq({ valid: false, inputs: [0, 2] })
+         expect { tx.validate_script_sigs }.to raise_error CoinOp::Bit::Transaction::InvalidSignaturesError, [0, 2].to_json
        end
      end
 
@@ -105,7 +105,7 @@ describe CoinOp::Bit::Transaction do
         expect(native).to receive(:verify_input_signature).and_return(true, true, true)
         tx.instance_variable_set(:@native, native)
         expect(tx).to receive(:inputs).and_return inputs
-        expect(tx.validate_script_sigs).to eq({ valid: true, inputs: [] })
+        expect(tx.validate_script_sigs).to eq true
       end
     end
   end
@@ -202,6 +202,48 @@ describe CoinOp::Bit::Transaction do
     context 'when output is weird' do
       it 'should throw an error' do
         expect { tx.Output([]) }.to raise_error TypeError
+      end
+    end
+  end
+
+  describe '#process_unspents' do
+    let!(:tx) { CoinOp::Bit::Transaction.from_data(outputs: []) }
+    let!(:unspent100) { tx.Output(value: 100, address: '37oUcVHj6yC1rk9YyQrJioW36U24UxP6YR') }
+    let!(:unspent200) { tx.Output(value: 200, address: '37oUcVHj6yC1rk9YyQrJioW36U24UxP6YR') }
+    let!(:unspent300) { tx.Output(value: 300, address: '37oUcVHj6yC1rk9YyQrJioW36U24UxP6YR') }
+    let!(:unspent400) { tx.Output(value: 400, address: '37oUcVHj6yC1rk9YyQrJioW36U24UxP6YR') }
+    let!(:unspent500) { tx.Output(value: 500, address: '37oUcVHj6yC1rk9YyQrJioW36U24UxP6YR') }
+    let!(:unspent601) { tx.Output(value: 601, address: '37oUcVHj6yC1rk9YyQrJioW36U24UxP6YR') }
+
+    before do
+      allow(tx).to receive(:output_value) { 700 }
+    end
+
+    context 'when unspents create dust' do
+      it 'should skip the ones that create dust' do
+        unspents = [ unspent300, unspent300, unspent200, unspent100 ]
+        expect(tx.process_unspents(unspents).map(&:output).map(&:value)).to eq [300, 300, 100]
+      end
+    end
+
+    context 'when unspents do not create dust' do
+      it 'should fund' do
+        unspents = [ unspent300, unspent100, unspent300, unspent200 ]
+        expect(tx.process_unspents(unspents).map(&:output).map(&:value)).to eq [300, 100, 300]
+      end
+    end
+
+    context 'when it never gets funded' do
+      it 'should raise forbidden' do
+        unspents = [ unspent300 ]
+        expect { tx.process_unspents(unspents) }.to raise_error CoinOp::Bit::Transaction::Forbidden
+      end
+    end
+
+    context 'when there is a weird case' do
+      it 'should produce dust unnecessarily' do
+        unspents = [ unspent601, unspent500, unspent500, unspent400 ]
+        expect(tx.process_unspents(unspents).map(&:output).map(&:value)).to eq [601, 500]
       end
     end
   end

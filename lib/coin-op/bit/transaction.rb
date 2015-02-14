@@ -3,6 +3,7 @@ module CoinOp::Bit
   class Transaction
     include CoinOp::Encodings
     CURRENT_VERSION = 1
+    DUST_BAR = 546
 
     DeprecationError = Class.new(StandardError)
     def self.build
@@ -38,7 +39,8 @@ module CoinOp::Bit
       new(native: tx, inputs: tx.inputs, outputs: tx.outputs)
     end
 
-    attr_reader :native, :inputs, :outputs, :confirmations, :fee_override, :version, :lock_time, :tx_hash
+    attr_reader :native, :inputs, :outputs, :confirmations, :fee_override,
+                :version, :lock_time, :tx_hash
 
     def initialize(native: Bitcoin::Protocol::Tx.new, inputs:, outputs:,
                    fee: 0, confirmations: 0, version: CURRENT_VERSION,
@@ -65,12 +67,14 @@ module CoinOp::Bit
     end
 
     # Verify that the script_sigs for all inputs are valid.
+    InvalidSignaturesError = Class.new(StandardError)
     def validate_script_sigs
       bad_inputs = inputs.each_with_index.map do |input, index|
         # TODO: confirm whether we need to mess with the block_timestamp arg
         index unless native.verify_input_signature(index, input.output.transaction.native)
       end.compact
-      { valid: bad_inputs.empty?, inputs: bad_inputs }
+      raise InvalidSignaturesError, bad_inputs.to_json unless bad_inputs.empty?
+      true
     end
 
     def add_input(input)
@@ -85,6 +89,57 @@ module CoinOp::Bit
       @outputs << output
       @native.add_out(output.native)
       output
+    end
+
+    Forbidden = Class.new(StandardError)
+    def process_unspents(unspents)
+      # TODO: We should discuss whether we want to use the largest outputs or
+      # first do a lookahead and see if we can find the smallest output that
+      # covers the remaining amount of the transaction.
+      #
+      # TODO: This has another problem, e.g.
+      # tx.output_value = 1000
+      # unspent_values = [601, 500, 500, 400, 101]
+      # We could fund with 500 and 500, but since 400 gets added initially,
+      # there's no combination of the other outputs that won't generate dust.
+      # The transaction will still get funded due to the dusty_unspents loop,
+      # But it's inefficient/wasteful.
+
+      dusty_unspents = []
+      valid_combs = unspents.combination.to_a.select { |comb| comb.reduce(:+) >= output_value }
+      fee_sorted = valid_combs.min_by { |comb| Fee.estimate(comb, outputs) }
+      no_dusts = fee_sorted.select do |comb|
+        comb.reduce(:+) == 0 || comb.reduce(:+) > DUST_BAR
+      end
+
+      unspents.each do |unspent|
+        # 546 satoshis is the dust bar, only use that output if it's the only
+        # output that can fund the transaction.
+        # the change IF you were to add the unspent
+        change = (input_value + unspent.value) - output_value
+        # change is <= 0 when we have more left over
+        if change > DUST_BAR || change <= 0
+          add_input(output: unspent)
+        else
+          # Add the output back to a dust array in case it ends up being
+          # the only output we can use.
+          dusty_unspents << unspent
+        end
+
+        return inputs if funded?
+      end
+
+      # Didn't get funded.
+      dusty_unspents.each do |unspent|
+        add_input(output: unspent)
+        return inputs if funded?
+      end
+
+      if input_value > output_value
+        raise Forbidden, "Balance cannot cover transaction fee of #{fee_override} satoshis"
+      else
+        raise Forbidden,'Balance cannot cover outputs'
+      end
     end
 
     # Returns the transaction hash as a string of bytes.

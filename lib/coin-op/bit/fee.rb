@@ -22,8 +22,7 @@ module CoinOp::Bit
     # that deviate from the customary single signature.
     #
     # Returns the estimated fee in satoshis.
-    def estimate(unspents, payees, tx_size=nil)
-      tx_size ||= estimate_tx_size(unspents.size, payees.size)
+    def estimate(unspents, payees, tx_size=estimate_tx_size(unspents.size, payees.size))
       output_amounts = payees.map(&:value)
       output_amounts << nominal_change(unspents, output_amounts)
 
