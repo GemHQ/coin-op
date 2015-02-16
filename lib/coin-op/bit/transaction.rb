@@ -37,7 +37,9 @@ module CoinOp::Bit
 
     # Construct a transaction from an instance of ::Bitcoin::Protocol::Tx
     def self.from_native(tx)
-      new(native: tx, inputs: tx.inputs, outputs: tx.outputs)
+      t = new(native: tx, inputs: tx.inputs, outputs: tx.outputs)
+      t.validate_syntax
+      t
     end
 
     attr_reader :native, :inputs, :outputs, :confirmations, :fee_override,
@@ -52,7 +54,6 @@ module CoinOp::Bit
       @native = native
       inputs.each { |i| add_input(i) }
       outputs.each { |i| add_output(i) }
-      validate_syntax
     end
     # Monkeypatch to remove a test that fails because bitcoin-ruby thinks a
     # transaction doesn't have valid syntax when it contains a coinbase input.
@@ -105,6 +106,7 @@ module CoinOp::Bit
       # there's no combination of the other outputs that won't generate dust.
       # The transaction will still get funded due to the dusty_unspents loop,
       # But it's inefficient/wasteful.
+      dusty_unspents = []
 
       unspents.each do |unspent|
         # 546 satoshis is the dust bar, only use that output if it's the only

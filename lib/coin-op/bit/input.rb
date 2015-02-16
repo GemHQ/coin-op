@@ -10,7 +10,7 @@ module CoinOp::Bit
 
     attr_accessor :transaction, :index
 
-    def self.new_with_output(index:, transaction:, output:, script_sig_asm: nil)
+    def self.new_with_output(index:, transaction:, output:, script_sig_asm: nil, **extras)
       output = Output.new(output) unless output.is_a? Output
       native = Bitcoin::Protocol::TxIn.new
 
