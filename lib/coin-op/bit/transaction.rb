@@ -4,6 +4,7 @@ module CoinOp::Bit
     include CoinOp::Encodings
     CURRENT_VERSION = 1
     DUST_BAR = 546
+    CONFIRMED_THRESHOLD = 6
 
     DeprecationError = Class.new(StandardError)
     def self.build
@@ -105,13 +106,6 @@ module CoinOp::Bit
       # The transaction will still get funded due to the dusty_unspents loop,
       # But it's inefficient/wasteful.
 
-      dusty_unspents = []
-      valid_combs = unspents.combination.to_a.select { |comb| comb.reduce(:+) >= output_value }
-      fee_sorted = valid_combs.min_by { |comb| Fee.estimate(comb, outputs) }
-      no_dusts = fee_sorted.select do |comb|
-        comb.reduce(:+) == 0 || comb.reduce(:+) > DUST_BAR
-      end
-
       unspents.each do |unspent|
         # 546 satoshis is the dust bar, only use that output if it's the only
         # output that can fund the transaction.
@@ -182,6 +176,10 @@ module CoinOp::Bit
 
     def to_json(*a)
       self.to_hash.to_json(*a)
+    end
+
+    def confirmed?
+      confirmations >= CONFIRMED_THRESHOLD
     end
 
     # Compute the digest for a given input.  In most cases, you need to provide
@@ -258,6 +256,10 @@ module CoinOp::Bit
       end
 
       total
+    end
+
+    def covered_by?(balance)
+      balance >= (output_value + fee_override)
     end
 
     # Are the currently selected inputs sufficient to cover the current

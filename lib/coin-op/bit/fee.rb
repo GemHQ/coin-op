@@ -10,7 +10,8 @@ module CoinOp::Bit
     # > old, 1 btc coin (144 is the expected number of blocks per day) and a
     # > transaction size of 250 bytes.
     PRIORITY_THRESHOLD = 57_600_000
-    TX_SIZE_THRESHOLD = 1000
+    # bitcoinfees.com says this should be 10k.
+    TX_SIZE_THRESHOLD = 10_000
     PAYEE_VALUE_THRESHOLD = 1_000_000
 
     module_function
@@ -62,6 +63,11 @@ module CoinOp::Bit
       # > next thousand bytes and add a fee of 0.1 mBTC (0.0001 BTC) per thousand bytes
       size = (bytes / 1000) + 1
       Bitcoin.network[:min_tx_fee] * size
+    end
+
+    # solving for num_inputs in estimate_tx_size, setting equation eq to threshold
+    def max_free_inputs(num_outputs)
+      ((TX_SIZE_THRESHOLD - 10) - (35 * num_outputs)) / 148
     end
 
     # From http://bitcoinfees.com.  This estimation is only valid for
