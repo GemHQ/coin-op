@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe CoinOp::Bit::Transaction do
   before do
-    allow_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax)
+    allow_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax!)
   end
   describe '.from_native' do
     let(:inputs) do
@@ -45,7 +45,7 @@ describe CoinOp::Bit::Transaction do
 
     context 'invalid syntax' do
       it 'should raise error' do
-        expect_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax).and_raise(CoinOp::Bit::Transaction::InvalidNativeSyntaxError)
+        expect_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax!).and_raise(CoinOp::Bit::Transaction::InvalidNativeSyntaxError)
         tx = spy('tx', outputs: outputs, inputs: inputs)
         expect { CoinOp::Bit::Transaction.from_native(tx) }.to raise_error(CoinOp::Bit::Transaction::InvalidNativeSyntaxError)
       end
@@ -114,7 +114,7 @@ describe CoinOp::Bit::Transaction do
     let(:tx) { CoinOp::Bit::Transaction.from_data(outputs: []) }
     let(:address) { '1BYX25TtdZSwUCQqmwonLTEdj6ceamNg96' }
     before do
-      allow_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax)
+      allow_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax!)
     end
 
     context 'when input is hash' do
@@ -166,7 +166,7 @@ describe CoinOp::Bit::Transaction do
     let(:tx) { CoinOp::Bit::Transaction.from_data(outputs: []) }
     let(:address) { '1BYX25TtdZSwUCQqmwonLTEdj6ceamNg96' }
     before do
-      allow_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax)
+      allow_any_instance_of(CoinOp::Bit::Transaction).to receive(:validate_syntax!)
     end
     context 'when output is a hash' do
       it 'should return correct output' do

@@ -57,7 +57,7 @@ describe "Transaction" do
     end
 
     it "passes syntax validation" do
-      report = @transaction.validate_syntax
+      report = @transaction.validate_syntax!
       assert_equal(
         {:valid => true, :error => nil},
         report
@@ -176,7 +176,7 @@ describe "Transaction" do
     end
 
     it "fails validation" do
-      report = @empty_tx.validate_syntax
+      report = @empty_tx.validate_syntax!
       assert_equal false, report[:valid]
       assert_equal :lists, report[:error].first
     end

@@ -38,7 +38,7 @@ module CoinOp::Bit
     # Construct a transaction from an instance of ::Bitcoin::Protocol::Tx
     def self.from_native(tx)
       t = new(native: tx, inputs: tx.inputs, outputs: tx.outputs)
-      t.validate_syntax
+      t.validate_syntax!
       t
     end
 
@@ -61,7 +61,7 @@ module CoinOp::Bit
 
     # Validate that the transaction is plausibly signable.
     InvalidNativeSyntaxError = Class.new(StandardError)
-    def validate_syntax
+    def validate_syntax!
       @native = Bitcoin::Protocol::Tx.new(@native.to_payload)
       validator = Bitcoin::Validation::Tx.new(@native, nil)
       unless validator.validate(rules: [:syntax])
@@ -223,7 +223,7 @@ module CoinOp::Bit
     # of multisig situations.
     def set_script_sigs(*input_args, &block)
       # No sense trying to authorize when the transaction isn't usable.
-      validate_syntax
+      validate_syntax!
 
       # Array#zip here allows us to iterate over the inputs in lockstep with any
       # number of sets of values.
