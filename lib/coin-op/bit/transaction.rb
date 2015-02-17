@@ -14,7 +14,7 @@ module CoinOp::Bit
     # Construct a Transaction from a data structure of nested Hashes
     # and Arrays.
     def self.from_data(outputs:, confirmations: 0, fee: 0, inputs: [],
-                      version: CURRENT_VERSION, lock_time: 0)
+                      version: CURRENT_VERSION, lock_time: 0, **extras)
       new(
         fee: fee,
         version: version,
@@ -62,6 +62,7 @@ module CoinOp::Bit
     # Validate that the transaction is plausibly signable.
     InvalidNativeSyntaxError = Class.new(StandardError)
     def validate_syntax
+      @native = Bitcoin::Protocol::Tx.new(@native.to_payload)
       validator = Bitcoin::Validation::Tx.new(@native, nil)
       unless validator.validate(rules: [:syntax])
         raise InvalidNativeSyntaxError, validator.error.to_json
@@ -227,9 +228,23 @@ module CoinOp::Bit
       # Array#zip here allows us to iterate over the inputs in lockstep with any
       # number of sets of values.
       self.inputs.zip(*input_args) do |input, *input_arg|
-        input.script_sig = yield input, *input_arg
+        input.script_sig = block.call(input, *input_arg)
       end
     end
+
+#     def set_script_sigs(*input_args, &block)
+# # No sense trying to authorize when the transaction isn't usable.
+#       report = validate_syntax
+#       unless report[:valid] == true
+#         raise "Invalid syntax: #{report[:errors].to_json}"
+#       end
+# # Array#zip here allows us to iterate over the inputs in lockstep with any
+# # number of sets of values.
+#       self.inputs.zip(*input_args) do |input, *input_arg|
+#         input.script_sig = yield input, *input_arg
+#       end
+#     end
+
 
     def fee_override
       @fee_override || self.estimate_fee
