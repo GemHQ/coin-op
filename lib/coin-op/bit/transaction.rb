@@ -194,9 +194,31 @@ module CoinOp::Bit
       @native.signature_hash_for_input(input.index, script.to_blob)
     end
 
+    # A convenience method for authorizing inputs in a generic manner.
+    # Rather than iterating over the inputs manually, the user can
+    # provide this method with an array of values and a block that
+    # knows what to do with the values.
+    #
+    # For example, if you happen to have the script sigs precomputed
+    # for some strange reason, you could do this:
+    #
+    #   tx.set_script_sigs sig_array do |input, sig|
+    #     sig
+    #   end
+    #
+    # More realistically, if you have an array of the keypairs corresponding
+    # to the inputs:
+    #
+    #   tx.set_script_sigs keys do |input, key|
+    #     sig_hash = tx.sig_hash(input)
+    #     key.sign(sig_hash)
+    #   end
+    #
     # Each element of the array may be an array, which allows for easy handling
     # of multisig situations.
     # tree to signatures array is an ARRAY OF ARRAY OF HASHES -- sick right? -__-
+
+
     def sign_inputs(tree_to_signatures_array, wallet)
       validate_syntax!
       inputs.each_with_index do |input, index|
@@ -210,8 +232,8 @@ module CoinOp::Bit
 
     def sort_binary_signatures_by_tree(tree_to_signatures)
       combined = {}
-      tree_to_signatures.each do |tree_to_signature|
-        tree_to_signature.each do |tree, signature|
+      tree_to_signatures.each do |trees_to_signature|
+        trees_to_signature.each do |tree, signature|
           combined[tree] = decode_base58(signature)
         end
       end

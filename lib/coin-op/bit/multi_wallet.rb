@@ -195,6 +195,12 @@ module CoinOp::Bit
     # Returns the transaction.
     def authorize(transaction, *signers)
       transaction.sign_inputs(signers, self)
+      # transaction.set_each_input_script_sig(signers) do |input, sig_dicts|
+      #   node = path(input.output.metadata[:wallet_path])
+      #   signatures = combine_signatures(sig_dicts)
+      #   node.script_sig(signatures)
+      # end
+      # transaction
     end
   end
 
@@ -237,17 +243,10 @@ module CoinOp::Bit
       Script.new(:address => self.script.p2sh_address, :network => @network)
     end
 
-    def sign(name, value)
-      raise "No such key: '#{name}'" unless (key = @keys[name.to_sym])
-      # \x01 means the hash type is SIGHASH_ALL
-      # https://en.bitcoin.it/wiki/OP_CHECKSIG#Hashtype_SIGHASH_ALL_.28default.29
-      key.sign(value) + "\x01"
-    end
-
     def signatures(value)
       out = {}
       @keys.each do |name, key|
-        out[name] = base58(self.sign(name, value))
+        out[name] = base58(key.sign(value))
       end
       out
     end
