@@ -6,11 +6,6 @@ module CoinOp::Bit
     DUST_BAR = 546
     CONFIRMED_THRESHOLD = 6
 
-    DeprecationError = Class.new(StandardError)
-    def self.build
-      raise DeprecationError
-    end
-
     # Construct a Transaction from a data structure of nested Hashes
     # and Arrays.
     def self.from_data(outputs:, confirmations: 0, fee: 0, inputs: [],
@@ -199,52 +194,37 @@ module CoinOp::Bit
       @native.signature_hash_for_input(input.index, script.to_blob)
     end
 
-    # A convenience method for authorizing inputs in a generic manner.
-    # Rather than iterating over the inputs manually, the user can
-    # provide this method with an array of values and a block that
-    # knows what to do with the values.
-    #
-    # For example, if you happen to have the script sigs precomputed
-    # for some strange reason, you could do this:
-    #
-    #   tx.set_script_sigs sig_array do |input, sig|
-    #     sig
-    #   end
-    #
-    # More realistically, if you have an array of the keypairs corresponding
-    # to the inputs:
-    #
-    #   tx.set_script_sigs keys do |input, key|
-    #     sig_hash = tx.sig_hash(input)
-    #     key.sign(sig_hash)
-    #   end
-    #
     # Each element of the array may be an array, which allows for easy handling
     # of multisig situations.
-    def set_script_sigs(*input_args, &block)
-      # No sense trying to authorize when the transaction isn't usable.
+    # tree to signatures array is an ARRAY OF ARRAY OF HASHES -- sick right? -__-
+    def sign_inputs(tree_to_signatures_array, wallet)
       validate_syntax!
-
-      # Array#zip here allows us to iterate over the inputs in lockstep with any
-      # number of sets of values.
-      self.inputs.zip(*input_args) do |input, *input_arg|
-        input.script_sig = block.call(input, *input_arg)
+      inputs.each_with_index do |input, index|
+        tree_to_signatures = tree_to_signatures_array[index]
+        node = wallet.path(input.output.metadata[:wallet_path])
+        binary_signatures = sort_binary_signatures_by_tree(tree_to_signatures)
+        input.script_sig = node.script_sig(binary_signatures)
       end
+      self
     end
 
-#     def set_script_sigs(*input_args, &block)
-# # No sense trying to authorize when the transaction isn't usable.
-#       report = validate_syntax
-#       unless report[:valid] == true
-#         raise "Invalid syntax: #{report[:errors].to_json}"
-#       end
-# # Array#zip here allows us to iterate over the inputs in lockstep with any
-# # number of sets of values.
-#       self.inputs.zip(*input_args) do |input, *input_arg|
-#         input.script_sig = yield input, *input_arg
-#       end
-#     end
+    def sort_binary_signatures_by_tree(tree_to_signatures)
+      combined = {}
+      tree_to_signatures.each do |tree_to_signature|
+        tree_to_signature.each do |tree, signature|
+          combined[tree] = decode_base58(signature)
+        end
+      end
 
+      # number of sets of values.
+      # self.inputs.zip(*input_args) do |input, *input_arg|
+      #   input.script_sig = block.call(input, *input_arg)
+      # end
+      # Order of signatures is important for validation, so we always
+      # sort public keys and signatures by the name of the tree
+      # they belong to.
+      combined.sort_by { |tree, _| tree }.map { |_, sig| sig }
+    end
 
     def fee_override
       @fee_override || self.estimate_fee

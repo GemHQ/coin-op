@@ -194,33 +194,8 @@ module CoinOp::Bit
     #
     # Returns the transaction.
     def authorize(transaction, *signers)
-      transaction.set_script_sigs *signers do |input, *sig_dicts|
-        node = self.path(input.output.metadata[:wallet_path])
-        signatures = combine_signatures(*sig_dicts)
-        node.script_sig(signatures)
-      end
-      transaction
+      transaction.sign_inputs(signers, self)
     end
-
-    # Takes any number of "signature dictionaries", which are Hashes where
-    # the keys are tree names, and the values are base58-encoded signatures
-    # for a single input.
-    #
-    # Returns an Array of the signatures in binary, sorted by their tree names.
-    def combine_signatures(*sig_dicts)
-      combined = {}
-      sig_dicts.each do |sig_dict|
-        sig_dict.each do |tree, signature|
-          combined[tree] = decode_base58(signature)
-        end
-      end
-
-      # Order of signatures is important for validation, so we always
-      # sort public keys and signatures by the name of the tree
-      # they belong to.
-      combined.sort_by { |tree, value| tree }.map { |tree, sig| sig }
-    end
-
   end
 
   class MultiNode
