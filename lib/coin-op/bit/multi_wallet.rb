@@ -86,6 +86,42 @@ module CoinOp::Bit
       end
     end
 
+    def private_seed(name)
+      raise "No such node: '#{name}'" unless (node = @private_trees[name.to_sym])
+      node.to_bip32(:private)
+    end
+
+    alias_method :private_address, :private_seed
+
+    def public_seed(name)
+      name = name.to_sym
+      if node = (@public_trees[name] || @private_trees[name])
+        node.to_bip32
+      else
+        raise "No such node: '#{name}'"
+      end
+    end
+
+    def private_seeds
+      out = {}
+      @private_trees.each do |name, tree|
+        out[name] = self.private_address(name)
+      end
+      out
+    end
+
+    def public_seeds
+      out = {}
+      @private_trees.each do |name, node|
+        out[name] = node.to_bip32
+      end
+      out
+    end
+
+    alias_method :public_address, :public_seed
+    alias_method :private_addresses, :private_seeds
+    alias_method :public_addresses, :public_seeds
+
     def path(path)
       options = {
         :path => path,

@@ -23,7 +23,7 @@ Gem::Specification.new do |s|
   s.require_path = "lib"
 
   s.add_dependency("bitcoin-ruby", "0.0.6")
-  s.add_dependency("money-tree", "~> 0.8")
+  #s.add_dependency("money-tree", "~> 0.8")
   s.add_dependency("rbnacl-libsodium", "~> 1.0")
   s.add_dependency("hashie", "~> 2.0")
 
