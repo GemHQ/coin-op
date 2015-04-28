@@ -66,11 +66,11 @@ module CoinOp::Bit
       self.class.new options
     end
 
-    def drop_private(*names)
+    def drop_private(*names, network:)
       names.each do |name|
         name = name.to_sym
         tree = @private_trees.delete(name)
-        address = tree.to_bip32
+        address = tree.to_bip32(network: network)
         @public_trees[name] = MoneyTree::Master.from_bip32(address)
       end
     end
@@ -86,34 +86,34 @@ module CoinOp::Bit
       end
     end
 
-    def private_seed(name)
+    def private_seed(name, network:)
       raise "No such node: '#{name}'" unless (node = @private_trees[name.to_sym])
-      node.to_bip32(:private)
+      node.to_bip32(:private, network: network)
     end
 
     alias_method :private_address, :private_seed
 
-    def public_seed(name)
+    def public_seed(name, network:)
       name = name.to_sym
       if node = (@public_trees[name] || @private_trees[name])
-        node.to_bip32
+        node.to_bip32(network: network)
       else
         raise "No such node: '#{name}'"
       end
     end
 
-    def private_seeds
+    def private_seeds(network:)
       out = {}
       @private_trees.each do |name, tree|
-        out[name] = self.private_address(name)
+        out[name] = self.private_address(name, network: network)
       end
       out
     end
 
-    def public_seeds
+    def public_seeds(network:)
       out = {}
       @private_trees.each do |name, node|
-        out[name] = node.to_bip32
+        out[name] = node.to_bip32(network: network)
       end
       out
     end
