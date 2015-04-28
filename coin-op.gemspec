@@ -25,7 +25,7 @@ Gem::Specification.new do |s|
   s.add_dependency("bitcoin-ruby", "0.0.6")
   s.add_dependency("money-tree", "~> 0.8")
   s.add_dependency("rbnacl-libsodium", "~> 1.0")
-  s.add_dependency("hashie", "~> 3.4")
+  s.add_dependency("hashie", "~> 2.0")
 
   s.add_development_dependency("starter", "0.1.12")
   s.add_development_dependency("sequel", "~> 4.8")
