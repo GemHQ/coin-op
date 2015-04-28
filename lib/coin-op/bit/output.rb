@@ -20,25 +20,25 @@ module CoinOp::Bit
     #   or      :address (a valid Bitcoin address)
     # * :metadata (a Hash with arbitrary contents)
     #
-    def initialize(options)
-      if options[:transaction]
-        @transaction = options[:transaction]
-      elsif options[:transaction_hash]
-        @transaction_hash = options[:transaction_hash]
+    def initialize(transaction: nil, transaction_hash: nil,
+                   index:, value:, address: nil, confirmations: nil,
+                   metadata: {}, script: nil, network:)
+      if transaction
+        @transaction = transaction
+      elsif transaction_hash
+        @transaction_hash = transaction_hash
       end
 
       # FIXME: be aware of string bitcoin values versus
       # integer satoshi values
-      @index, @value, @address, confirmations =
-        options.values_at :index, :value, :address, :confirmations
+      @index, @value, @address, @metadata = index, value, address, metadata
 
-      @metadata = options[:metadata] || {}
       @metadata[:confirmations] ||= confirmations
 
-      if options[:script]
-        @script = Script.new(options[:script])
+      if script
+        @script = Script.new(script)
       elsif @address
-        @script = Script.new(:address => @address)
+        @script = Script.new(address: @address, network: network)
       end
 
 

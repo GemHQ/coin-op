@@ -12,7 +12,7 @@ module CoinOp::Bit
 
     # Construct a Transaction from a data structure of nested Hashes
     # and Arrays.
-    def self.data(data)
+    def self.data(data, network: :bitcoin)
 
       version, lock_time, fee, inputs, outputs, confirmations =
         data.values_at :version, :lock_time, :fee, :inputs, :outputs, :confirmations
@@ -24,7 +24,7 @@ module CoinOp::Bit
       )
 
       outputs.each do |output_hash|
-        transaction.add_output Output.new(output_hash)
+        transaction.add_output(Output.new(output_hash.merge(network: network)))
       end
 
       #FIXME: we're not handling sig_scripts for already signed inputs.
