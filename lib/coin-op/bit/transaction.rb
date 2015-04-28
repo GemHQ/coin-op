@@ -24,7 +24,7 @@ module CoinOp::Bit
       )
 
       outputs.each do |output_hash|
-        transaction.add_output(Output.new(output_hash.merge(network: network)))
+        transaction.add_output(Output.new(output_hash, network: network))
       end
 
       #FIXME: we're not handling sig_scripts for already signed inputs.
