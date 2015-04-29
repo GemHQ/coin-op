@@ -169,12 +169,12 @@ module CoinOp::Bit
     # Takes a Transaction ready to be signed.
     #
     # Returns an Array of signature dictionaries.
-    def signatures(transaction)
+    def signatures(transaction, names: [:primary])
       transaction.inputs.map do |input|
         path = input.output.metadata[:wallet_path]
         node = self.path(path)
         sig_hash = transaction.sig_hash(input, node.script)
-        node.signatures(sig_hash)
+        node.signatures(sig_hash, names: names)
       end
     end
 
@@ -269,9 +269,10 @@ module CoinOp::Bit
       key.sign(value) + "\x01"
     end
 
-    def signatures(value)
+    def signatures(value, names:)
       out = {}
       @keys.each do |name, key|
+        next unless names.include?(name)
         out[name] = base58(self.sign(name, value))
       end
       out
