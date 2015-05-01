@@ -32,6 +32,8 @@ module CoinOp::Bit
       network_name = (options[:network] || :testnet3) rescue :testnet3
       @network = Bitcoin::NETWORKS[network_name]
       Bitcoin.network = network_name
+      puts 'AHHHHHHHHHHHHHHHHHHHHHH'
+      puts Bitcoin.network
 
       # literals
       if options.is_a? String
