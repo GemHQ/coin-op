@@ -34,6 +34,7 @@ module CoinOp::Bit
 
       @metadata = options[:metadata] || {}
       @metadata[:confirmations] ||= confirmations
+      puts "OUTPUT network: #{network}"
 
       if options[:script]
         @script = Script.new(options[:script])
