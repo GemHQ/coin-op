@@ -36,6 +36,7 @@ module CoinOp::Bit
       rescue => e
         puts "ERROR!!!!!"
         puts "network : #{network}"
+        puts "networkopts: #{options}"
         puts "networkname : #{network_name}"
         puts "bt: #{e.backtrace}"
         puts options.class
