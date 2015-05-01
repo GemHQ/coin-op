@@ -31,7 +31,7 @@ module CoinOp::Bit
       # Doing the rescue in case the input argument is a String.
       network_name = (options[:network] || :testnet3) rescue :testnet3
       @network = Bitcoin::NETWORKS[network_name]
-      raise Error if network_name != :bitcoin
+      raise 'AHHH' if network_name != :bitcoin
       Bitcoin.network = network_name
       puts 'AHHHHHHHHHHHHHHHHHHHHHH'
       puts Bitcoin.network
