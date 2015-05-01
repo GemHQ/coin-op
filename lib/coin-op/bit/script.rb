@@ -36,6 +36,7 @@ module CoinOp::Bit
         raise 'AHHH' if network_name != :bitcoin
       rescue => e
         puts "ERROR!!!!!"
+        puts options
         puts "options: #{options[:network]}"
         puts "error: #{e}"
         puts "bt: #{e.backtrace}"
