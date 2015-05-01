@@ -20,7 +20,8 @@ module CoinOp::Bit
       transaction = self.new(
         :fee => fee,
         :version => version, :lock_time => lock_time,
-        :confirmations => confirmations
+        :confirmations => confirmations,
+        network: network
       )
 
       outputs.each do |output_hash|
@@ -102,6 +103,7 @@ module CoinOp::Bit
       @native = Bitcoin::Protocol::Tx.new
       @inputs = []
       @outputs = []
+      @network = options[:network]
       @fee_override = options[:fee]
       @confirmations = options[:confirmations]
     end
@@ -178,7 +180,7 @@ module CoinOp::Bit
     # Takes either an Output or a Hash describing an output.
     def add_output(output)
       unless output.is_a? Output
-        output = Output.new(output)
+        output = Output.new(output, network: @network)
       end
 
       index = @outputs.size
