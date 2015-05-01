@@ -31,20 +31,7 @@ module CoinOp::Bit
     def initialize(options, network: nil)
       network_name = network || (options[:network] || :testnet3) rescue :testnet3
       @network = Bitcoin::NETWORKS[network_name]
-      begin
-        raise 'AHHH' if network_name != :bitcoin
-      rescue => e
-        puts "ERROR!!!!!"
-        puts "network : #{network}"
-        puts "networkopts: #{options}"
-        puts "networkname : #{network_name}"
-        puts "bt: #{e.backtrace}"
-        puts options.class
-        puts "error: #{e}"
-      end
       Bitcoin.network = network_name
-      puts 'AHHHHHHHHHHHHHHHHHHHHHH'
-      puts Bitcoin.network
 
       # literals
       if options.is_a? String
