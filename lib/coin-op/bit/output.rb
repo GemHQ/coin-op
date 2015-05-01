@@ -21,6 +21,7 @@ module CoinOp::Bit
     # * :metadata (a Hash with arbitrary contents)
     #
     def initialize(options, network: nil)
+      network = options[:network] || network
       if options[:transaction]
         @transaction = options[:transaction]
       elsif options[:transaction_hash]
