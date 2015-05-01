@@ -23,7 +23,6 @@ module CoinOp::Bit
         :confirmations => confirmations
       )
 
-      puts "TRANSACTION network: #{network}"
       outputs.each do |output_hash|
         transaction.add_output(Output.new(output_hash, network: network))
       end
