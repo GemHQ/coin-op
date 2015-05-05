@@ -244,6 +244,7 @@ module CoinOp::Bit
     end
 
     def script(m=2)
+      require 'pry'; binding.pry
       # m of n
       keys = @public_keys.sort_by {|name, key| name }.map {|name, key| key.pub }
       Script.new(public_keys: keys, needed: m, network: network)
@@ -256,7 +257,6 @@ module CoinOp::Bit
     alias_method :p2sh_address, :address
 
     def p2sh_script
-      require 'pry'; binding.pry
       Script.new(:address => self.script.p2sh_address, network: network)
     end
 
