@@ -1,8 +1,14 @@
+GIT
+  remote: https://github.com/lian/bitcoin-ruby
+  revision: 69123208d45a19da446c5e0079d4fa2e225e5be6
+  branch: master
+  specs:
+    bitcoin-ruby (0.0.6)
+
 PATH
   remote: .
   specs:
     coin-op (0.2.4)
-      bitcoin-ruby (= 0.0.6)
       hashie (~> 2.0)
       pry
       rbnacl-libsodium (~> 1.0)
@@ -11,7 +17,6 @@ GEM
   remote: https://rubygems.org/
   specs:
     ansi (1.5.0)
-    bitcoin-ruby (0.0.6)
     builder (3.2.2)
     coderay (1.1.0)
     diff-lcs (1.2.5)
@@ -54,6 +59,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  bitcoin-ruby!
   coin-op!
   minitest-reporters (~> 1.0)
   rspec
