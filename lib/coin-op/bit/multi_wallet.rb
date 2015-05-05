@@ -244,7 +244,6 @@ module CoinOp::Bit
     end
 
     def script(m=2)
-      require 'pry'; binding.pry
       # m of n
       keys = @public_keys.sort_by {|name, key| name }.map {|name, key| key.pub }
       Script.new(public_keys: keys, needed: m, network: network)
