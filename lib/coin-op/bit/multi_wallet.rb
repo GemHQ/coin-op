@@ -217,6 +217,7 @@ module CoinOp::Bit
     CODE_TO_NETWORK = {
       0 => :bitcoin,
       1 => :testnet3
+      2 => :litecoin
     }
 
     attr_reader :path, :private, :public, :keys, :public_keys
