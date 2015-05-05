@@ -256,6 +256,7 @@ module CoinOp::Bit
     alias_method :p2sh_address, :address
 
     def p2sh_script
+      require 'pry'; binding.pry
       Script.new(:address => self.script.p2sh_address, network: network)
     end
 
