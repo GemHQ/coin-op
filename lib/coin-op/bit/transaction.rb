@@ -293,7 +293,11 @@ module CoinOp::Bit
     end
 
     def fee_override
-      @fee_override || self.estimate_fee
+      fee = @fee_override || self.estimate_fee
+      if output_value < fee
+        raise 'Fee cannot be greater than the output value'
+      end
+      fee
     end
 
     # Estimate the fee in satoshis for this transaction.  Takes an optional
