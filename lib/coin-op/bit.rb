@@ -1,5 +1,62 @@
 require "bitcoin"
 
+Bitcoin::NETWORKS[:dogecoin] = Bitcoin::NETWORKS[:litecoin].merge({
+  project: :dogecoin,
+  magic_head: "\xc0\xc0\xc0\xc0",
+  address_version: "1e",
+  p2sh_version: "16",
+  privkey_version: "9e",
+  default_port: 22556,
+  protocol_version: 70003,
+  max_money: 100_000_000_000 * Bitcoin::COIN,
+  min_tx_fee: Bitcoin::COIN,
+  min_relay_tx_fee: Bitcoin::COIN,
+  free_tx_bytes: 26_000,
+  dust: Bitcoin::COIN,
+  per_dust_fee: true,
+  coinbase_maturity: 30,
+  coinbase_maturity_new: 240,
+  reward_base: 500_000 * Bitcoin::COIN,
+  reward_halving: 100_000,
+  retarget_interval: 240,
+  retarget_time: 14400, # 4 hours
+  retarget_time_new: 60, # 1 minute
+  target_spacing: 60, # block interval
+  dns_seeds: [
+    "seed.dogechain.info", 
+    "seed.dogecoin.com",
+  ],
+  genesis_hash: "1a91e3dace36e2be3bf030a65679fe821aa1d6ef92e7c9902eb318182c355691",
+  proof_of_work_limit: 0x1e0fffff,
+  alert_pubkeys: [],
+  known_nodes: [
+    "daemons.chain.so",
+    "bootstrap.chain.so",
+  ],
+  checkpoints: {
+    0 => "1a91e3dace36e2be3bf030a65679fe821aa1d6ef92e7c9902eb318182c355691",
+    42279 => "8444c3ef39a46222e87584ef956ad2c9ef401578bd8b51e8e4b9a86ec3134d3a",
+    42400 => "557bb7c17ed9e6d4a6f9361cfddf7c1fc0bdc394af7019167442b41f507252b4",
+    104679 => "35eb87ae90d44b98898fec8c39577b76cb1eb08e1261cfc10706c8ce9a1d01cf",
+    128370 => "3f9265c94cab7dc3bd6a2ad2fb26c8845cb41cff437e0a75ae006997b4974be6",
+    145000 => "cc47cae70d7c5c92828d3214a266331dde59087d4a39071fa76ddfff9b7bde72",
+    165393 => "7154efb4009e18c1c6a6a79fc6015f48502bcd0a1edd9c20e44cd7cbbe2eeef1",
+    186774 => "3c712c49b34a5f34d4b963750d6ba02b73e8a938d2ee415dcda141d89f5cb23a",
+    199992 => "3408ff829b7104eebaf61fd2ba2203ef2a43af38b95b353e992ef48f00ebb190",
+    225000 => "be148d9c5eab4a33392a6367198796784479720d06bfdd07bd547fe934eea15a",
+    250000 => "0e4bcfe8d970979f7e30e2809ab51908d435677998cf759169407824d4f36460",
+    270639 => "c587a36dd4f60725b9dd01d99694799bef111fc584d659f6756ab06d2a90d911",
+    299742 => "1cc89c0c8a58046bf0222fe131c099852bd9af25a80e07922918ef5fb39d6742",
+    323141 => "60c9f919f9b271add6ef5671e9538bad296d79f7fdc6487ba702bf2ba131d31d",
+    339202 => "8c29048df5ae9df38a67ea9470fdd404d281a3a5c6f33080cd5bf14aa496ab03"
+  },
+  auxpow_chain_id: 0x0062,
+  # Doge-specific hard-fork cutoffs
+  difficulty_change_block: 145000,
+  maturity_change_block: 145000,
+  auxpow_start_block: 371337
+})
+
 # bitcoin-ruby is not multi-network friendly.  It's also a hassle
 # to tell what network you're using if you don't already know.
 # This makes it a bit easier.
