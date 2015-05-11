@@ -1,27 +1,15 @@
-require "money-tree"
-require "bitcoin"
-
 module CoinOp::Bit
 
   class MultiWallet
     include CoinOp::Encodings
 
-    NetworkMap = {
-      :testnet3 => :bitcoin_testnet,
-      :bitcoin_testnet => :bitcoin_testnet,
-      :bitcoin => :bitcoin
-    }
-
-    def self.generate(names, network_name=:testnet3)
-      unless network = NetworkMap[network_name]
-        raise ArgumentError, "Unknown network #{network_name}"
-      end
+    def self.generate(names)
       masters = {}
       names.each do |name|
         name = name.to_sym
-        masters[name] = MoneyTree::Master.new(:network => network)
+        masters[name] = MoneyTree::Master.new
       end
-      self.new(:private => masters, :network => network)
+      self.new(private: masters)
     end
 
     attr_reader :trees
@@ -30,7 +18,6 @@ module CoinOp::Bit
       @private_trees = {}
       @public_trees = {}
       @trees = {}
-      @network = NetworkMap[options.include? :network ? options[:network] : :testnet3]
 
       # FIXME: we should allow this.
       # if !private_trees
@@ -57,7 +44,7 @@ module CoinOp::Bit
       when MoneyTree::Node
         arg
       when String
-        MoneyTree::Node.from_serialized_address(arg)
+        MoneyTree::Node.from_bip32(arg)
       else
         raise "Unusable type: #{node.class}"
       end
@@ -79,18 +66,18 @@ module CoinOp::Bit
       self.class.new options
     end
 
-    def drop_private(*names)
+    def drop_private(*names, network:)
       names.each do |name|
         name = name.to_sym
         tree = @private_trees.delete(name)
-        address = tree.to_serialized_address
-        @public_trees[name] = MoneyTree::Master.from_serialized_address(address)
+        address = tree.to_bip32(network: network)
+        @public_trees[name] = MoneyTree::Master.from_bip32(address)
       end
     end
 
     def import(addresses)
       addresses.each do |name, address|
-        node = MoneyTree::Master.from_serialized_address(address)
+        node = MoneyTree::Master.from_bip32(address)
         if node.private_key
           @private_trees[name] = node
         else
@@ -99,35 +86,34 @@ module CoinOp::Bit
       end
     end
 
-    def private_seed(name)
+    def private_seed(name, network:)
       raise "No such node: '#{name}'" unless (node = @private_trees[name.to_sym])
-      node.to_serialized_address(:private)
+      node.to_bip32(:private, network: network)
     end
 
     alias_method :private_address, :private_seed
 
-    def public_seed(name)
+    def public_seed(name, network:)
       name = name.to_sym
       if node = (@public_trees[name] || @private_trees[name])
-        node.to_serialized_address
+        node.to_bip32(network: network)
       else
         raise "No such node: '#{name}'"
       end
     end
 
-
-    def private_seeds
+    def private_seeds(network:)
       out = {}
       @private_trees.each do |name, tree|
-        out[name] = self.private_address(name)
+        out[name] = self.private_address(name, network: network)
       end
       out
     end
 
-    def public_seeds
+    def public_seeds(network:)
       out = {}
       @private_trees.each do |name, node|
-        out[name] = node.to_serialized_address
+        out[name] = node.to_bip32(network: network)
       end
       out
     end
@@ -141,7 +127,6 @@ module CoinOp::Bit
         :path => path,
         :private => {},
         :public => {},
-        :network => @network
       }
       @private_trees.each do |name, node|
         options[:private][name] = node.node_for_path(path)
@@ -211,7 +196,10 @@ module CoinOp::Bit
       combined = {}
       sig_dicts.each do |sig_dict|
         sig_dict.each do |tree, signature|
-          combined[tree] = decode_base58(signature)
+          decoded_sig = decode_base58(signature)
+          low_s_der_sig = Bitcoin::Script.is_low_der_signature?(decoded_sig) ?
+            decoded_sig : Bitcoin::OpenSSL_EC.signature_to_low_s(decoded_sig)
+          combined[tree] = Bitcoin::OpenSSL_EC.repack_der_signature(low_s_der_sig)
         end
       end
 
@@ -226,6 +214,13 @@ module CoinOp::Bit
   class MultiNode
     include CoinOp::Encodings
 
+    CODE_TO_NETWORK = {
+      0 => :bitcoin,
+      1 => :testnet3,
+      2 => :litecoin,
+      3 => :dogecoin
+    }
+
     attr_reader :path, :private, :public, :keys, :public_keys
     def initialize(options)
       @path = options[:path]
@@ -234,7 +229,6 @@ module CoinOp::Bit
       @public_keys = {}
       @private = options[:private]
       @public = options[:public]
-      @network = options[:network]
 
       @private.each do |name, node|
         key = Bitcoin::Key.new(node.private_key.to_hex, node.public_key.to_hex)
@@ -246,10 +240,14 @@ module CoinOp::Bit
       end
     end
 
+    def network
+      CODE_TO_NETWORK.fetch(@path.split('/')[2].to_i)
+    end
+
     def script(m=2)
       # m of n
       keys = @public_keys.sort_by {|name, key| name }.map {|name, key| key.pub }
-      Script.new(:public_keys => keys, :needed => m, :network => @network)
+      Script.new(public_keys: keys, needed: m, network: network)
     end
 
     def address
@@ -259,21 +257,14 @@ module CoinOp::Bit
     alias_method :p2sh_address, :address
 
     def p2sh_script
-      Script.new(:address => self.script.p2sh_address, :network => @network)
-    end
-
-    def sign(name, value)
-      raise "No such key: '#{name}'" unless (key = @keys[name.to_sym])
-      # \x01 means the hash type is SIGHASH_ALL
-      # https://en.bitcoin.it/wiki/OP_CHECKSIG#Hashtype_SIGHASH_ALL_.28default.29
-      key.sign(value) + "\x01"
+      Script.new(:address => self.script.p2sh_address, network: network)
     end
 
     def signatures(value, names:)
       out = {}
       @keys.each do |name, key|
         next unless names.include?(name)
-        out[name] = base58(self.sign(name, value))
+        out[name] = base58(key.sign(value))
       end
       out
     end
@@ -286,3 +277,4 @@ module CoinOp::Bit
 
 
 end
+

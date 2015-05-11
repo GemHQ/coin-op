@@ -12,26 +12,28 @@ module CoinOp::Bit
 
     # Construct a Transaction from a data structure of nested Hashes
     # and Arrays.
-    def self.data(data)
+    def self.data(data, network: :bitcoin)
+
       version, lock_time, fee, inputs, outputs, confirmations =
         data.values_at :version, :lock_time, :fee, :inputs, :outputs, :confirmations
 
       transaction = self.new(
         :fee => fee,
         :version => version, :lock_time => lock_time,
-        :confirmations => confirmations
+        :confirmations => confirmations,
+        network: network
       )
 
-      outputs.each do |data|
-        transaction.add_output Output.new(data)
+      outputs.each do |output_hash|
+        transaction.add_output(Output.new(output_hash, network: network))
       end
 
       #FIXME: we're not handling sig_scripts for already signed inputs.
 
       if inputs
         # TODO: use #each instead of #each_with_index
-        inputs.each_with_index do |data, index|
-          transaction.add_input(data)
+        inputs.each_with_index do |input_hash, index|
+          transaction.add_input(input_hash)
 
           ## FIXME: verify that the supplied and computed sig_hashes match
           #puts :sig_hashes_match => (data[:sig_hash] == input.sig_hash)
@@ -101,6 +103,7 @@ module CoinOp::Bit
       @native = Bitcoin::Protocol::Tx.new
       @inputs = []
       @outputs = []
+      @network = options[:network]
       @fee_override = options[:fee]
       @confirmations = options[:confirmations]
     end
@@ -141,7 +144,6 @@ module CoinOp::Bit
       valid = true
       @inputs.each_with_index do |input, index|
         # TODO: confirm whether we need to mess with the block_timestamp arg
-
         unless self.native.verify_input_signature(index, input.output.transaction.native)
           valid = false
           bad_inputs << index
@@ -178,7 +180,7 @@ module CoinOp::Bit
     # Takes either an Output or a Hash describing an output.
     def add_output(output)
       unless output.is_a? Output
-        output = Output.new(output)
+        output = Output.new(output, network: @network)
       end
 
       index = @outputs.size
@@ -222,12 +224,13 @@ module CoinOp::Bit
     # Typically used only by #to_json.
     def to_hash
       {
+        :confirmations => self.confirmations.nil? ? 0 : self.confirmations,
         :version => self.version,
         :lock_time => self.lock_time,
         :hash => self.hex_hash,
         :fee => self.fee,
         :inputs => self.inputs,
-        :outputs => self.outputs,
+        :outputs => self.outputs
       }
     end
 
@@ -235,10 +238,14 @@ module CoinOp::Bit
       self.to_hash.to_json(*a)
     end
 
-    # Compute the digest for a given input.  In most cases, you need to provide
-    # the script.  Which script to supply can be confusing, especially in the
-    # case of P2SH outputs.
-    # TODO: explain the above more clearly.
+    # Compute the digest for a given input.  This is the value that is actually
+    # signed in a transaction.
+    # e.g. I want to spend UTXO0 - I provide the UTXO0 as an input.
+    #      I provide as a script the script to which UTXO0 was paid.
+    # If UTX0 was paid to a P2SH address, the script here needs to be the correct
+    # m-of-n structure, which may well not be part of the input.output object
+    # - This works here because we default to 2-of-3 and have consistent ordering
+    # When we support multiple m-of-n's, this may become a prollem.
     def sig_hash(input, script=nil)
       # We only allow SIGHASH_ALL at this time
       # https://en.bitcoin.it/wiki/OP_CHECKSIG#Hashtype_SIGHASH_ALL_.28default.29
@@ -286,7 +293,11 @@ module CoinOp::Bit
     end
 
     def fee_override
-      @fee_override || self.estimate_fee
+      fee = @fee_override || self.estimate_fee
+      if output_value < fee
+        raise 'Fee cannot be greater than the output value'
+      end
+      fee
     end
 
     # Estimate the fee in satoshis for this transaction.  Takes an optional
@@ -363,3 +374,4 @@ module CoinOp::Bit
   end
 
 end
+

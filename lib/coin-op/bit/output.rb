@@ -20,7 +20,8 @@ module CoinOp::Bit
     #   or      :address (a valid Bitcoin address)
     # * :metadata (a Hash with arbitrary contents)
     #
-    def initialize(options)
+    def initialize(options, network: nil)
+      network = options[:network] || network
       if options[:transaction]
         @transaction = options[:transaction]
       elsif options[:transaction_hash]
@@ -36,9 +37,9 @@ module CoinOp::Bit
       @metadata[:confirmations] ||= confirmations
 
       if options[:script]
-        @script = Script.new(options[:script])
+        @script = Script.new(options[:script], network: network)
       elsif @address
-        @script = Script.new(:address => @address)
+        @script = Script.new(address: @address, network: network)
       end
 
 
@@ -95,3 +96,4 @@ module CoinOp::Bit
   end
 
 end
+

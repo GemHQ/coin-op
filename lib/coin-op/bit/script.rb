@@ -27,9 +27,9 @@ module CoinOp::Bit
     # The name of the crypto-currency network may also be specified.  It
     # defaults to :testnet3.  Names supplied in this manner must correspond
     # to the names in the ::Bitcoin::NETWORKS Hash.
-    def initialize(options)
-      # Doing the rescue in case the input argument is a String.
-      network_name = (options[:network] || :testnet3) rescue :testnet3
+    # TODO: PLEASE refactor this. should not accept either string or hash
+    def initialize(options, network: nil)
+      network_name = network || (options[:network] || :testnet3) rescue :testnet3
       @network = Bitcoin::NETWORKS[network_name]
       Bitcoin.network = network_name
 
@@ -66,7 +66,7 @@ module CoinOp::Bit
     end
 
     def address
-      @native.get_p2sh_address
+      @native.get_address
     end
 
     def to_s
@@ -121,7 +121,7 @@ module CoinOp::Bit
     end
 
     def p2sh_address
-      Bitcoin.hash160_to_p2sh_address(self.hash160)
+      Bitcoin.encode_address(self.hash160, Bitcoin::NETWORKS[@network[:name]][:p2sh_version])
     end
 
     # Generate a P2SH script_sig for the current script, using the
@@ -135,3 +135,4 @@ module CoinOp::Bit
   end
 
 end
+
