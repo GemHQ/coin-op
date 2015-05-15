@@ -65,8 +65,6 @@ module CoinOp::Bit
       @string = @native.to_string
     end
 
-    alias_method :address, :p2sh_address
-
     def to_s
       @string
     end
@@ -121,6 +119,8 @@ module CoinOp::Bit
     def p2sh_address
       Bitcoin.encode_address(self.hash160, Bitcoin::NETWORKS[@network[:name]][:p2sh_version])
     end
+
+    alias_method :address, :p2sh_address
 
     # Generate a P2SH script_sig for the current script, using the
     # supplied options, which will, in the case of a multisig input,
