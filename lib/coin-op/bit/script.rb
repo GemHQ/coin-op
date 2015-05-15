@@ -105,7 +105,7 @@ module CoinOp::Bit
     end
 
     def hash160
-      Bitcoin.hash160(@hex)
+      @native.get_hash160
     end
 
     # Generate the script that uses a P2SH address.
