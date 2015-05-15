@@ -66,12 +66,12 @@ module CoinOp::Bit
       self.class.new options
     end
 
-    def drop_private(*names, network:)
+    def drop_private(*names)
       names.each do |name|
         name = name.to_sym
         tree = @private_trees.delete(name)
-        address = tree.to_bip32(network: network)
-        @public_trees[name] = MoneyTree::Master.from_bip32(address)
+        serialized_priv = tree.to_bip32
+        @public_trees[name] = MoneyTree::Master.from_bip32(serialized_priv)
       end
     end
 
@@ -277,4 +277,3 @@ module CoinOp::Bit
 
 
 end
-

@@ -65,9 +65,7 @@ module CoinOp::Bit
       @string = @native.to_string
     end
 
-    def address
-      @native.get_address
-    end
+    alias_method :address, :p2sh_address
 
     def to_s
       @string
@@ -135,4 +133,3 @@ module CoinOp::Bit
   end
 
 end
-
