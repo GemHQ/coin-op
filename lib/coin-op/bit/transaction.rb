@@ -12,7 +12,7 @@ module CoinOp::Bit
 
     # Construct a Transaction from a data structure of nested Hashes
     # and Arrays.
-    def self.data(data, network: :bitcoin)
+    def self.data(data, network:)
 
       version, lock_time, fee, inputs, outputs, confirmations =
         data.values_at :version, :lock_time, :fee, :inputs, :outputs, :confirmations
