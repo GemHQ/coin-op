@@ -13,7 +13,6 @@ module CoinOp::Bit
     # Construct a Transaction from a data structure of nested Hashes
     # and Arrays.
     def self.data(data, network:)
-
       version, lock_time, fee, inputs, outputs, confirmations =
         data.values_at :version, :lock_time, :fee, :inputs, :outputs, :confirmations
 
@@ -294,7 +293,7 @@ module CoinOp::Bit
     end
 
     def fee_override
-      @fee_override || self.estimate_fee
+      @fee_override || self.estimate_fee(network: @network)
     end
 
     # Estimate the fee in satoshis for this transaction.  Takes an optional
