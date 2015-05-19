@@ -130,8 +130,8 @@ module CoinOp::Bit
     # supplied options, which will, in the case of a multisig input,
     # be {:signatures => array_of_signatures}.
     def p2sh_sig(options)
+      string = Script.new(options).to_s
       CoinOp.syncbit(@network[:name]) do
-        string = Script.new(options).to_s
         Bitcoin::Script.binary_from_string("#{string} #{self.to_hex}")
       end
     end
