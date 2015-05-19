@@ -21,7 +21,7 @@ module CoinOp::Bit
       unspent_total = unspents.inject(0) {|sum, output| sum += output.value}
       payee_total = payees.inject(0) {|sum, payee| sum += payee.value}
       nominal_change = unspent_total - payee_total
-      payees << Output.new(:value => nominal_change)
+      payees << Output.new(value: nominal_change, network: network)
 
       tx_size ||= estimate_tx_size(unspents.size, payees.size)
       min = payees.min_by {|payee| payee.value }
