@@ -1,5 +1,5 @@
 # Ruby bindings for libsodium, a port of DJB's NaCl crypto library
-require "rbnacl/libsodium"
+require "rbnacl"
 require "openssl"
 
 module CoinOp
