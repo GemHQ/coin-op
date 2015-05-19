@@ -21,8 +21,8 @@ module CoinOp::Bit
     # * :metadata (a Hash with arbitrary contents)
     #
     def initialize(options, network: nil)
-      network = options[:network] || network
-      raise(ArgumentError, 'Network cannot be nil!') unless network
+      network_name = options[:network] || network
+      raise(ArgumentError, 'Network cannot be nil!') unless network_name
       if options[:transaction]
         @transaction = options[:transaction]
       elsif options[:transaction_hash]
@@ -38,9 +38,9 @@ module CoinOp::Bit
       @metadata[:confirmations] ||= confirmations
 
       if options[:script]
-        @script = Script.new(options[:script], network: network)
+        @script = Script.new(options[:script], network: network_name)
       elsif @address
-        @script = Script.new(address: @address, network: network)
+        @script = Script.new(address: @address, network: network_name)
       end
 
 
