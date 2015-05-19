@@ -14,6 +14,7 @@ module CoinOp::Bit
     # and Arrays.
     def self.data(data, network:)
 
+      require 'pry'; binding.pry
       version, lock_time, fee, inputs, outputs, confirmations =
         data.values_at :version, :lock_time, :fee, :inputs, :outputs, :confirmations
 
