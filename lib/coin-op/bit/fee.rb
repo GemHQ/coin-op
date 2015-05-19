@@ -12,7 +12,7 @@ module CoinOp::Bit
     # that deviate from the customary single signature.
     #
     # Returns the estimated fee in satoshis.
-    def estimate(unspents, payees, tx_size=nil)
+    def estimate(unspents, payees, tx_size=nil, network:)
       # https://en.bitcoin.it/wiki/Transaction_fees
 
       # dupe because we'll need to add a change output
@@ -37,17 +37,17 @@ module CoinOp::Bit
       if small && big_outputs && high_priority
         0
       else
-        fee_for_bytes(tx_size)
+        fee_for_bytes(tx_size, network: network)
       end
 
     end
 
-    def fee_for_bytes(bytes)
+    def fee_for_bytes(bytes, network:) 
       # https://en.bitcoin.it/wiki/Transaction_fees
       # > the reference implementation will round up the transaction size to the
       # > next thousand bytes and add a fee of 0.1 mBTC (0.0001 BTC) per thousand bytes
       size = (bytes / 1000) + 1
-      Bitcoin.network[:min_tx_fee] * size
+      CoinOp.syncbit(network) { Bitcoin.network[:min_tx_fee] * size }
     end
 
     # From http://bitcoinfees.com.  This estimation is only valid for

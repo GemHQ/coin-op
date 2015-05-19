@@ -31,38 +31,38 @@ module CoinOp::Bit
     def initialize(options, network: nil)
       network_name = network || (options[:network] || :testnet3) rescue :testnet3
       @network = Bitcoin::NETWORKS[network_name]
-      Bitcoin.network = network_name
 
       # literals
-      if options.is_a? String
-        @blob = Bitcoin::Script.binary_from_string options
-      elsif string = options[:string]
-        @blob = Bitcoin::Script.binary_from_string string
-      elsif options[:blob]
-        @blob = options[:blob]
-      elsif options[:hex]
-        @blob = decode_hex(options[:hex])
-      # arguments for constructing
-      else
-        if address = options[:address]
-          unless Bitcoin::valid_address?(address)
-            raise ArgumentError, "Invalid address: #{address}"
-          end
-          @blob = Bitcoin::Script.to_address_script(address)
-        elsif public_key = options[:public_key]
-          @blob = Bitcoin::Script.to_pubkey_script(public_key)
-        elsif (keys = options[:public_keys]) && (needed = options[:needed])
-          @blob = Bitcoin::Script.to_multisig_script(needed, *keys)
-        elsif signatures = options[:signatures]
-          @blob = Bitcoin::Script.to_multisig_script_sig(*signatures)
+      CoinOp.syncbit(network_name) do 
+        if options.is_a? String
+          @blob = Bitcoin::Script.binary_from_string options
+        elsif string = options[:string]
+          @blob = Bitcoin::Script.binary_from_string string
+        elsif options[:blob]
+          @blob = options[:blob]
+        elsif options[:hex]
+          @blob = decode_hex(options[:hex])
+          # arguments for constructing
         else
-          raise ArgumentError
+          if address = options[:address]
+            unless Bitcoin::valid_address?(address)
+              raise ArgumentError, "Invalid address: #{address}"
+            end
+            @blob = Bitcoin::Script.to_address_script(address)
+          elsif public_key = options[:public_key]
+            @blob = Bitcoin::Script.to_pubkey_script(public_key)
+          elsif (keys = options[:public_keys]) && (needed = options[:needed])
+            @blob = Bitcoin::Script.to_multisig_script(needed, *keys)
+          elsif signatures = options[:signatures]
+            @blob = Bitcoin::Script.to_multisig_script_sig(*signatures)
+          else
+            raise ArgumentError
+          end
         end
+        @native = Bitcoin::Script.new @blob
+        @hex = hex(@blob)
+        @string = @native.to_string
       end
-
-      @hex = hex(@blob)
-      @native = Bitcoin::Script.new @blob
-      @string = @native.to_string
     end
 
     def to_s
@@ -105,7 +105,9 @@ module CoinOp::Bit
     end
 
     def hash160
-      @native.get_hash160 || Bitcoin.hash160(@hex)
+      CoinOp.syncbit(@network[:name]) do
+        @native.get_hash160 || Bitcoin.hash160(@hex)
+      end
     end
 
     # Generate the script that uses a P2SH address.
@@ -113,7 +115,9 @@ module CoinOp::Bit
     # can probably be removed, as I think it is equivalent to
     # Script.new :address => some_p2sh_address
     def p2sh_script
-      self.class.new Bitcoin::Script.to_p2sh_script(self.hash160)
+      CoinOp.syncbit(@network[:name]) do |b|
+        self.class.new Bitcoin::Script.to_p2sh_script(self.hash160)
+      end
     end
 
     def p2sh_address
@@ -126,8 +130,10 @@ module CoinOp::Bit
     # supplied options, which will, in the case of a multisig input,
     # be {:signatures => array_of_signatures}.
     def p2sh_sig(options)
-      string = Script.new(options).to_s
-      Bitcoin::Script.binary_from_string("#{string} #{self.to_hex}")
+      CoinOp.syncbit(@network[:name]) do
+        string = Script.new(options).to_s
+        Bitcoin::Script.binary_from_string("#{string} #{self.to_hex}")
+      end
     end
 
   end

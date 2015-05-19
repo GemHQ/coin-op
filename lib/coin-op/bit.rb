@@ -235,6 +235,14 @@ require "money-tree"
 
 # establish the namespace
 module CoinOp
+  @bitcoin_mutex = Mutex.new
+
+  def self.syncbit(network, &block)
+    @bitcoin_mutex.synchronize do
+      Bitcoin.network = network
+      block.call
+    end
+  end
   module Bit
   end
 end
