@@ -19,13 +19,13 @@ module CoinOp::Bit
     # * script_sig_asm - the string form of the scriptSig for this input
     #
     def initialize(options={})
-      @transaction, @index, @output =
-        options.values_at :transaction, :index, :output
+      @transaction, @index, @output, @network =
+        options.values_at :transaction, :index, :output, :network
 
       script_sig_asm = options[:script_sig_asm]
 
       unless @output.is_a? Output
-        @output = Output.new(@output)
+        @output = Output.new(@output, network: @network)
       end
 
       @native = Bitcoin::Protocol::TxIn.new

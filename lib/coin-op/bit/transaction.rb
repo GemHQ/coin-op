@@ -14,7 +14,6 @@ module CoinOp::Bit
     # and Arrays.
     def self.data(data, network:)
 
-      require 'pry'; binding.pry
       version, lock_time, fee, inputs, outputs, confirmations =
         data.values_at :version, :lock_time, :fee, :inputs, :outputs, :confirmations
 
@@ -34,7 +33,7 @@ module CoinOp::Bit
       if inputs
         # TODO: use #each instead of #each_with_index
         inputs.each_with_index do |input_hash, index|
-          transaction.add_input(input_hash)
+          transaction.add_input(input_hash, network: network)
 
           ## FIXME: verify that the supplied and computed sig_hashes match
           #puts :sig_hashes_match => (data[:sig_hash] == input.sig_hash)
@@ -160,14 +159,15 @@ module CoinOp::Bit
     # * an instance of Output
     # * a Hash describing an Output
     #
-    def add_input(input)
+    def add_input(input, network:)
       # TODO: allow specifying prev_tx and index with a Hash.
       # Possibly stop using SparseInput.
 
       unless input.is_a?(Input)
         input = Input.new input.merge(
-          :transaction => self,
-          :index => @inputs.size,
+          transaction: self,
+          index: @inputs.size,
+          network: network
         )
       end
 
