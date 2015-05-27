@@ -251,13 +251,11 @@ module CoinOp::Bit
     end
 
     def address
-      self.script.p2sh_address
+      self.script.address
     end
 
-    alias_method :p2sh_address, :address
-
     def p2sh_script
-      Script.new(:address => self.script.p2sh_address, network: network)
+      Script.new(:address => self.script.address, network: network)
     end
 
     def signatures(value, names:)

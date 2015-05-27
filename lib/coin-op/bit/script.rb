@@ -104,27 +104,21 @@ module CoinOp::Bit
       self.to_hash.to_json(*a)
     end
 
-    def hash160
-      CoinOp.syncbit(@network[:name]) do
-        @native.get_hash160 || Bitcoin.hash160(@hex)
-      end
-    end
-
     # Generate the script that uses a P2SH address.
     # Used for an Output's scriptPubKey value.  Not much used, and
     # can probably be removed, as I think it is equivalent to
-    # Script.new :address => some_p2sh_address
+    # Script.new :address => some.address
     def p2sh_script
-      CoinOp.syncbit(@network[:name]) do |b|
-        self.class.new Bitcoin::Script.to_p2sh_script(self.hash160)
+      CoinOp.syncbit(@network[:name]) do
+        self.class.new Bitcoin::Script.to_p2sh_script(@native.get_hash160)
       end
     end
 
-    def p2sh_address
-      Bitcoin.encode_address(self.hash160, Bitcoin::NETWORKS[@network[:name]][:p2sh_version])
+    def address
+      CoinOp.syncbit(@network[:name]) do 
+        @native.get_address
+      end
     end
-
-    alias_method :address, :p2sh_address
 
     # Generate a P2SH script_sig for the current script, using the
     # supplied options, which will, in the case of a multisig input,
