@@ -109,9 +109,10 @@ module CoinOp::Bit
     # can probably be removed, as I think it is equivalent to
     # Script.new :address => some.address
     def p2sh_script
-      CoinOp.syncbit(@network[:name]) do
-        self.class.new Bitcoin::Script.to_p2sh_script(@native.get_hash160)
+      h160 = CoinOp.syncbit(@network[:name]) do
+        @native.get_hash160
       end
+      self.class.new(blob: Bitcoin::Script.to_p2sh_script(h160), network: @network[:name])
     end
 
     def hash160

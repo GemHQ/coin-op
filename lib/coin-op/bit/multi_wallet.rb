@@ -145,7 +145,7 @@ module CoinOp::Bit
     def valid_output?(output)
       if path = output.metadata.wallet_path
         node = self.path(path)
-        node.p2sh_script.to_s == output.script.to_s
+        node.p2sh_script.to_s == output.script.p2sh_script.to_s
       else
         true
       end
@@ -259,7 +259,7 @@ module CoinOp::Bit
     end
 
     def p2sh_script
-      Script.new(:address => self.script.address, network: network)
+      Script.new(:address => self.script.p2sh_address, network: network)
     end
 
     def signatures(value, names:)
