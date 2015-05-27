@@ -114,9 +114,16 @@ module CoinOp::Bit
       end
     end
 
+    def hash160
+      CoinOp.syncbit(@network[:name]) { Bitcoin.hash160(@hex) }
+    end
+
+    def p2sh_address
+      Bitcoin.encode_address(self.hash160, Bitcoin::NETWORKS[@network[:name]][:p2sh_version])
+    end
+
     def address
       CoinOp.syncbit(@network[:name]) do 
-        require 'pry'; binding.pry
         @native.get_address
       end
     end
