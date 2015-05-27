@@ -251,7 +251,11 @@ module CoinOp::Bit
     end
 
     def address
-      self.script.address
+      script.address
+    end
+
+    def p2sh_address
+      script.p2sh_address
     end
 
     def p2sh_script
