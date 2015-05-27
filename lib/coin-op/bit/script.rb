@@ -116,6 +116,7 @@ module CoinOp::Bit
 
     def address
       CoinOp.syncbit(@network[:name]) do 
+        require 'pry'; binding.pry
         @native.get_address
       end
     end
