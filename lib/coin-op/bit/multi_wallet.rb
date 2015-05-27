@@ -145,7 +145,7 @@ module CoinOp::Bit
     def valid_output?(output)
       if path = output.metadata.wallet_path
         node = self.path(path)
-        node.p2sh_script.to_s == output.script.to_s
+        node.p2sh_script.to_s == output.script.p2sh_script.to_s
       else
         true
       end
