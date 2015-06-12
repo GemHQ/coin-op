@@ -1,6 +1,5 @@
 # Ruby bindings for libsodium, a port of DJB's NaCl crypto library
-require "rbnacl"
-require "openssl"
+require 'openssl'
 
 module CoinOp
   module Crypto
@@ -43,10 +42,10 @@ module CoinOp
       #   :salt => salt, :nonce => nonce, :ciphertext => ciphertext
       #
       def self.decrypt(passphrase, hash)
-        salt, nonce, ciphertext =
-          hash.values_at(:salt, :nonce, :ciphertext).map {|s| decode_hex(s) }
-        box = self.new(passphrase, salt, hash[:iterations])
-        box.decrypt(nonce, ciphertext)
+        salt, iv, ciphertext =
+          hash.values_at(:salt, :iv, :ciphertext).map {|s| decode_hex(s) }
+        box = self.new(passphrase, salt, hash[:iterations] || ITERATIONS)
+        box.decrypt(iv, ciphertext)
       end
 
       attr_reader :salt
@@ -54,34 +53,54 @@ module CoinOp
       # Initialize with an existing salt and iterations to allow
       # decryption.  Otherwise, creates new values for these, meaning
       # it creates an entirely new secret-box.
-      def initialize(passphrase, salt=nil, iterations=nil)
-        @salt = salt || RbNaCl::Random.random_bytes(16)
-        @iterations = iterations || ITERATIONS
+      def initialize(passphrase, salt=OpenSSL::Random.random_bytes(16), iterations=ITERATIONS)
+        @salt = salt 
+        @iterations = iterations 
 
         key = OpenSSL::PKCS5.pbkdf2_hmac_sha1(
-          passphrase, @salt,
+          passphrase,
+          @salt,
           # TODO: decide on a very safe work factor
           # https://www.owasp.org/index.php/Password_Storage_Cheat_Sheet
           #
           @iterations, # number of iterations
-          32      # key length in bytes
+          64      # key length in bytes
         )
-        @box = RbNaCl::SecretBox.new(key)
+        @aes_key = key[0, 32]
+        @hmac_key = key[32, 32]
+        @cipher = OpenSSL::Cipher.new('AES-256-CBC')
+        @cipher.padding = 0
       end
 
-      def encrypt(plaintext)
-        nonce = RbNaCl::Random.random_bytes(RbNaCl::SecretBox.nonce_bytes)
-        ciphertext = @box.encrypt(nonce, plaintext)
+      def encrypt(plaintext, iv=@cipher.random_iv)
+        @cipher.encrypt
+        @cipher.iv = iv
+        @cipher.key = @aes_key
+        encrypted = @cipher.update(plaintext)
+        encrypted << @cipher.final
+        digest = OpenSSL::Digest::SHA256.new
+        hmac_digest = OpenSSL::HMAC.digest(digest, @hmac_key, iv + encrypted)
+        ciphertext = encrypted + hmac_digest
         {
           :iterations => @iterations,
           :salt => hex(@salt),
-          :nonce => hex(nonce),
+          :iv => hex(iv),
           :ciphertext => hex(ciphertext)
         }
       end
 
-      def decrypt(nonce, ciphertext)
-        @box.decrypt(nonce, ciphertext)
+      def decrypt(iv, ciphertext)
+        mac, ctext = ciphertext[-32, 32], ciphertext[0...-32]
+        digest = OpenSSL::Digest::SHA256.new
+        hmac_digest = OpenSSL::HMAC.digest(digest, @hmac_key, iv + ctext)
+        if hmac_digest != mac
+          raise('Invalid authentication code - this ciphertext may have been tampered with.')
+        end
+        @cipher.decrypt
+        @cipher.iv = iv
+        @cipher.key = @aes_key
+        decrypted = @cipher.update(ctext)
+        decrypted << @cipher.final
       end
 
     end
