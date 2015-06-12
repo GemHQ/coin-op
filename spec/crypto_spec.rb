@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe CoinOp::Crypto::PassphraseBox do
   describe 'encryption & decryption' do
-    xit 'd(e(C)) should == C' do
+    it 'd(e(C)) should == C' do
       plain = '0123456789abcdef'
       ct = CoinOp::Crypto::PassphraseBox.encrypt('passphrase', plain)
       decrypted = CoinOp::Crypto::PassphraseBox.decrypt('passphrase', ct)
@@ -60,6 +60,12 @@ describe CoinOp::Crypto::PassphraseBox do
         stored_dec = CoinOp::Crypto::PassphraseBox.decrypt(pass, encrypted)
         expect(plaintext).to eq dec
         expect(dec).to eq stored_dec
+      end
+    end
+
+    it 'should be decryptable' do
+      examples.each do |pass, plaintext, encrypted|
+        expect(plaintext).to eq CoinOp::Crypto::PassphraseBox.decrypt(pass, encrypted)
       end
     end
   end
