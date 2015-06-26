@@ -13,6 +13,7 @@ module CoinOp::Bit
     #
     # Returns the estimated fee in satoshis.
     def estimate(unspents, payees, tx_size=nil, network:)
+      require 'pry';bindng.pry
       # https://en.bitcoin.it/wiki/Transaction_fees
 
       # dupe because we'll need to add a change output
@@ -42,7 +43,7 @@ module CoinOp::Bit
 
     end
 
-    def fee_for_bytes(bytes, network:) 
+    def fee_for_bytes(bytes, network:)
       # https://en.bitcoin.it/wiki/Transaction_fees
       # > the reference implementation will round up the transaction size to the
       # > next thousand bytes and add a fee of 0.1 mBTC (0.0001 BTC) per thousand bytes
