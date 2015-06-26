@@ -13,7 +13,6 @@ module CoinOp::Bit
     #
     # Returns the estimated fee in satoshis.
     def estimate(unspents, payees, tx_size=nil, network:)
-      require 'pry';binding.pry
       # https://en.bitcoin.it/wiki/Transaction_fees
 
       # dupe because we'll need to add a change output
@@ -30,6 +29,7 @@ module CoinOp::Bit
       small = tx_size < 1000
       big_outputs = min.value > 1_000_000
 
+      require 'pry';binding.pry
       p = priority :size => tx_size, :unspents => (unspents.map do |output|
         {:value => output.value, :age => output.confirmations}
       end)
