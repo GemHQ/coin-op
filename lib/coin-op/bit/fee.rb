@@ -13,7 +13,7 @@ module CoinOp::Bit
     #
     # Returns the estimated fee in satoshis.
     def estimate(unspents, payees, tx_size=nil, network:)
-      require 'pry';bindng.pry
+      require 'pry';binding.pry
       # https://en.bitcoin.it/wiki/Transaction_fees
 
       # dupe because we'll need to add a change output
