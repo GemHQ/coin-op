@@ -5,6 +5,7 @@ PATH
       bitcoin-ruby (= 0.0.6)
       hashie (~> 2.0)
       money-tree (~> 0.9)
+      rbnacl-libsodium (= 1.0.3)
 
 GEM
   remote: http://rubygems.org/
@@ -21,6 +22,10 @@ GEM
       coderay (~> 1.1.0)
       method_source (~> 0.8.1)
       slop (~> 3.4)
+    rbnacl (3.1.2)
+      ffi
+    rbnacl-libsodium (1.0.3)
+      rbnacl (~> 3.0, >= 3.0.1)
     rspec (3.2.0)
       rspec-core (~> 3.2.0)
       rspec-expectations (~> 3.2.0)
