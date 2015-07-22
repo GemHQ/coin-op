@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    coin-op (0.4.3)
+    coin-op (0.4.4)
       bitcoin-ruby (= 0.0.6)
       hashie (~> 2.0)
       money-tree (~> 0.9)
@@ -52,3 +52,6 @@ DEPENDENCIES
   rspec
   sequel (~> 4.8)
   sqlite3 (~> 1.3)
+
+BUNDLED WITH
+   1.10.5

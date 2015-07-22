@@ -31,7 +31,7 @@ Gem::Specification.new do |s|
   # Sign gem when evaluating spec with `gem` command
   #  unless ENV has set a SKIP_GEM_SIGNING
   if ($0 =~ /gem\z/) and not ENV.include?('SKIP_GEM_SIGNING')
-    s.signing_key = File.join(Gem.user_home, '.ssh', 'gem-private_key.pem')
+    s.signing_key = File.join('/Volumes/IRONKEY/gem-private_key.pem')
   end
 
   s.add_dependency('bitcoin-ruby', '0.0.6')
