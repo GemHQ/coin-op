@@ -1,7 +1,4 @@
-# Ruby bindings for libsodium, a port of DJB's NaCl crypto library
-require 'rbnacl'
 require 'openssl'
-
 
 module CoinOp
   module Crypto
@@ -49,18 +46,11 @@ module CoinOp
       #   :salt => salt, :nonce => nonce, :ciphertext => ciphertext
       #
       def self.decrypt(passphrase, hash)
-        salt, iv, nonce, ciphertext =
-          hash.values_at(:salt, :iv, :nonce, :ciphertext).map {|s| decode_hex(s) }
+        salt, iv, ciphertext =
+          hash.values_at(:salt, :iv, :ciphertext).map { |s| decode_hex(s) }
 
-        mode = nil
-        if iv.empty?
-          mode = :nacl
-        elsif nonce.empty?
-          mode = :aes
-        end
-        
-        box = self.new(passphrase, mode, salt, hash[:iterations] || ITERATIONS)
-        box.decrypt(iv, nonce, ciphertext)
+        box = self.new(passphrase, :aes, salt, hash[:iterations] || ITERATIONS)
+        box.decrypt(iv, ciphertext)
       end
 
       attr_reader :salt
@@ -69,17 +59,14 @@ module CoinOp
       # decryption.  Otherwise, creates new values for these, meaning
       # it creates an entirely new secret-box.
       def initialize(passphrase, mode=:aes, salt=SecureRandom.random_bytes(SALT_RANDOM_BYTES), iterations=nil)
-        @salt = salt 
-        @iterations = iterations || ITERATIONS + SecureRandom.random_number(ITERATIONS_WINDOW) 
+        @salt = salt
+        @iterations = iterations || ITERATIONS + SecureRandom.random_number(ITERATIONS_WINDOW)
         @mode = mode
 
         if @mode == :aes
           @key = OpenSSL::PKCS5.pbkdf2_hmac_sha1(
             passphrase,
             @salt,
-            # TODO: decide on a very safe work factor
-            # https://www.owasp.org/index.php/Password_Storage_Cheat_Sheet
-            #
             @iterations, # number of iterations
             KEY_SIZE * 2 # key length in bytes
           )
@@ -88,17 +75,6 @@ module CoinOp
           @hmac_key = @key[KEY_SIZE, KEY_SIZE]
           @cipher = OpenSSL::Cipher.new(AES_CIPHER)
           @cipher.padding = 0
-        elsif @mode == :nacl
-          @key = OpenSSL::PKCS5.pbkdf2_hmac_sha1(
-            passphrase,
-            @salt,
-            # TODO: decide on a very safe work factor
-            # https://www.owasp.org/index.php/Password_Storage_Cheat_Sheet
-            #
-            @iterations, # number of iterations
-            KEY_SIZE     # key length in bytes
-          )
-          @box = RbNaCl::SecretBox.new(@key)
         end
 
       end
@@ -120,11 +96,11 @@ module CoinOp
         }
       end
 
-      def decrypt(iv, nonce, ciphertext)
+      def decrypt(iv, ciphertext)
         if @mode == :aes
           return decrypt_aes(iv, ciphertext)
         elsif @mode == :nacl
-          return decrypt_nacl(nonce, ciphertext)
+          raise('Incompatible ciphertext, for NaCl/Salsa20 try coin-op <= 0.4.4')
         end
         raise('Incompatible ciphertext')
       end
@@ -141,10 +117,6 @@ module CoinOp
         @cipher.key = @aes_key
         decrypted = @cipher.update(ctext)
         decrypted << @cipher.final
-      end
-
-      def decrypt_nacl(nonce, ciphertext)
-        @box.decrypt(nonce, ciphertext)
       end
 
     end

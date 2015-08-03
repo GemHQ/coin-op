@@ -20,25 +20,11 @@ describe CoinOp::Crypto::PassphraseBox do
          iv: '1bc9947601b4292059d4da59852dba30'}
       ],
       [
-        'asdfasdf', 'hellohellohello!',
-        {ciphertext: '7bfe3c0bfb7bd7c8ee54da1a29d365c10b5410d936e907b5fad3975e1370c6a9',
-         salt: '6cd9bffd914c47724260851e47f549bf',
-         iterations: 100000,
-         nonce: 'ece45621ca76981018bf6455d8f75ba2aa32d0f955efc029'}
-      ],
-      [
         'veryveryveryveryverylongpassphrase', 'hellohellohello!',
         {ciphertext: '718877e7aed7ef43c8aefbfce3a856b4a85a092cafc88a85a22a14c7ce632ac3f83beef10ac0797441209039ebd947c2',
          salt: 'e713895c90c226cb4d46c4ba4ac60371',
          iterations: 99307,
          iv: '680546fd230d044778c9e7da09712946'}
-      ],
-      [
-        'veryveryveryveryverylongpassphrase', 'hellohellohello!',
-        {ciphertext: '7f5e47d53121bc8f9e7062cae738ade50985472c1327a7b7a817d70a91937ed9',
-         salt: '3ef42f9135e88eb1c4c5998245ae6086',
-         iterations: 100000,
-         nonce: '88787a9ccbe08d22b96da30b0250aa140f4cb7d3862abef7'}
       ],
       [
         'veryveryveryveryverylongpassphrase', 'andaveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryveryvery
