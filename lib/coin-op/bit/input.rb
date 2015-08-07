@@ -6,7 +6,7 @@ module CoinOp::Bit
     include CoinOp::Encodings
 
     attr_reader :native, :output, :binary_sig_hash,
-      :signatures, :sig_hash, :script_sig, :index
+      :signatures, :sig_hash, :script_sig, :index, :sequence
 
     # Takes a Hash containing these fields:
     #
@@ -16,6 +16,8 @@ module CoinOp::Bit
     #
     # Optionally:
     #
+    # * :sequence - an integer used to modify the behavior of lock_time
+    #               defaults to 0xFFFFFFFF (lock_time disabled)
     # * script_sig_asm - the string form of the scriptSig for this input
     #
     def initialize(options={})
@@ -23,7 +25,6 @@ module CoinOp::Bit
         options.values_at :transaction, :index, :output, :network
 
       script_sig_asm = options[:script_sig_asm]
-
       unless @output.is_a? Output
         @output = Output.new(@output, network: @network)
       end
@@ -35,6 +36,11 @@ module CoinOp::Bit
       # wiki or in the reference client source and document here.
       @native.prev_out = decode_hex(@output.transaction_hash).reverse
       @native.prev_out_index = @output.index
+
+      if options[:sequence]
+        @sequence = options[:sequence].to_i
+        @native.sequence = int_to_byte_array(@sequence, endianness: :little)
+      end
 
       if script_sig_asm
         self.script_sig = Bitcoin::Script.binary_from_string(script_sig_asm)
@@ -63,10 +69,10 @@ module CoinOp::Bit
 
     def to_json(*a)
       {
-        :output => self.output,
-        :signatures => self.signatures.map {|b| hex(b) },
-        :sig_hash => self.sig_hash || "",
-        :script_sig => self.script_sig || ""
+        output: self.output,
+        signatures: self.signatures.map {|b| hex(b) },
+        sig_hash: self.sig_hash || "",
+        script_sig: self.script_sig || ""
       }.to_json(*a)
     end
 
@@ -80,16 +86,16 @@ module CoinOp::Bit
 
     def initialize(binary_hash, index)
       @output = {
-        # the binary hash is the result of 
+        # the binary hash is the result of
         # [tx.hash].pack("H*").reverse
-        :transaction_hash => hex(binary_hash.reverse),
-        :index => index,
+        transaction_hash: hex(binary_hash.reverse),
+        index: index
       }
     end
 
     def to_json(*a)
       {
-        :output => @output,
+        output: @output
       }.to_json(*a)
     end
 
@@ -98,5 +104,3 @@ module CoinOp::Bit
 
 
 end
-
-

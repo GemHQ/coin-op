@@ -22,7 +22,14 @@ module CoinOp
       self.decode_hex(::Bitcoin.decode_base58(string))
     end
 
+    def int_to_byte_array(i, endianness: :little)
+      arr = i.to_s(16).scan(/../).map { |x| x.hex.chr }
+      if endianness = :little
+        arr.reverse.join
+      else
+        arr.join
+      end
+    end
   end
 
 end
-
