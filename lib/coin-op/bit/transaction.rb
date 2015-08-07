@@ -17,9 +17,10 @@ module CoinOp::Bit
         data.values_at :version, :lock_time, :fee, :inputs, :outputs, :confirmations
 
       transaction = self.new(
-        :fee => fee,
-        :version => version, :lock_time => lock_time,
-        :confirmations => confirmations,
+        fee: fee,
+        version: version,
+        lock_time: lock_time,
+        confirmations: confirmations,
         network: network
       )
 
@@ -93,15 +94,16 @@ module CoinOp::Bit
     end
 
 
-    attr_reader :native, :inputs, :outputs, :confirmations
+    attr_reader :native, :inputs, :outputs, :confirmations, :lock_time, :version
 
     # A new Transaction contains no inputs or outputs; these can be added with
     # #add_input and #add_output.
-    # FIXME:  version and locktime options are ignored here.
     def initialize(options={})
       @native = Bitcoin::Protocol::Tx.new
       @inputs = []
       @outputs = []
+      @lock_time = @native.lock_time = (options[:lock_time] || 0)
+      @version = @native.ver = (options[:version] || 1)
       @network = options[:network]
       @fee_override = options[:fee]
       @confirmations = options[:confirmations]
@@ -224,13 +226,13 @@ module CoinOp::Bit
     # Typically used only by #to_json.
     def to_hash
       {
-        :confirmations => self.confirmations.nil? ? 0 : self.confirmations,
-        :version => self.version,
-        :lock_time => self.lock_time,
-        :hash => self.hex_hash,
-        :fee => self.fee,
-        :inputs => self.inputs,
-        :outputs => self.outputs
+        confirmations: self.confirmations.nil? ? 0 : self.confirmations,
+        version: self.version,
+        lock_time: self.lock_time,
+        hash: self.hex_hash,
+        fee: self.fee,
+        inputs: self.inputs,
+        outputs: self.outputs
       }
     end
 
@@ -361,13 +363,12 @@ module CoinOp::Bit
     # Takes a bitcoin address and optional metadata Hash.
     def add_change(address, metadata={})
       add_output(
-        :value => change_value,
-        :address => address,
-        :metadata => {:memo => "change"}.merge(metadata)
+        value: change_value,
+        address: address,
+        metadata: {memo: "change"}.merge(metadata)
       )
     end
 
   end
 
 end
-
