@@ -24,7 +24,7 @@ module CoinOp
 
     def int_to_byte_array(i, endianness: :little)
       arr = i.to_s(16).scan(/../).map { |x| x.hex.chr }
-      if endianness = :little
+      if endianness == :little
         arr.reverse.join
       else
         arr.join
