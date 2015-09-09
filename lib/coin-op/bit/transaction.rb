@@ -10,8 +10,7 @@ module CoinOp::Bit
       transaction
     end
 
-    # Construct a Transaction from a data structure of nested Hashes
-    # and Arrays.
+    # Construct a Transaction from a data structure of nested Hashes and Arrays.
     def self.data(data, network:)
       version, lock_time, fee, inputs, outputs, confirmations =
         data.values_at :version, :lock_time, :fee, :inputs, :outputs, :confirmations
@@ -25,20 +24,17 @@ module CoinOp::Bit
       )
 
       outputs.each do |output_hash|
-        transaction.add_output(Output.new(output_hash, network: network))
+        transaction.add_output(output_hash, network: network)
       end
 
       #FIXME: we're not handling sig_scripts for already signed inputs.
 
-      if inputs
-        # TODO: use #each instead of #each_with_index
-        inputs.each_with_index do |input_hash, index|
-          transaction.add_input(input_hash, network: network)
+      inputs.each do |input_hash|
+        transaction.add_input(input_hash, network: network)
 
-          ## FIXME: verify that the supplied and computed sig_hashes match
-          #puts :sig_hashes_match => (data[:sig_hash] == input.sig_hash)
-        end
-      end
+        ## FIXME: verify that the supplied and computed sig_hashes match
+        #puts :sig_hashes_match => (data[:sig_hash] == input.sig_hash)
+      end if inputs
 
       transaction
     end
@@ -160,17 +156,14 @@ module CoinOp::Bit
     # * an instance of Output
     # * a Hash describing an Output
     #
-    def add_input(input, network:)
+    def add_input(input, network: @network)
       # TODO: allow specifying prev_tx and index with a Hash.
       # Possibly stop using SparseInput.
 
-      unless input.is_a?(Input)
-        input = Input.new input.merge(
-          transaction: self,
-          index: @inputs.size,
-          network: network
-        )
-      end
+      input = Input.new(input.merge(transaction: self,
+                                    index: @inputs.size,
+                                    network: network)
+                       ) unless input.is_a?(Input)
 
       @inputs << input
       self.update_native do |native|
@@ -180,15 +173,15 @@ module CoinOp::Bit
     end
 
     # Takes either an Output or a Hash describing an output.
-    def add_output(output)
-      unless output.is_a? Output
-        output = Output.new(output, network: @network)
+    def add_output(output, network: @network)
+      if output.is_a?(Output)
+        output.set_transaction(self, @outputs.size)
+      else
+        output = Output.new(output.merge(transaction: self,
+                                         index: @outputs.size),
+                            network: network)
       end
 
-      index = @outputs.size
-      # TODO: stop using set_transaction and just pass self to Output.new
-      # Then remove output.set_transaction
-      output.set_transaction self, index
       @outputs << output
       self.update_native do |native|
         native.add_out(output.native)
