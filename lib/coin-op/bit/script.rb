@@ -1,4 +1,3 @@
-
 module CoinOp::Bit
 
   # A wrapper class to make it easier to read and write Bitcoin scripts.
@@ -33,7 +32,7 @@ module CoinOp::Bit
       @network = Bitcoin::NETWORKS[network_name]
 
       # literals
-      CoinOp.syncbit(network_name) do 
+      CoinOp.syncbit(network_name) do
         if options.is_a? String
           @blob = Bitcoin::Script.binary_from_string options
         elsif string = options[:string]
@@ -124,7 +123,7 @@ module CoinOp::Bit
     end
 
     def address
-      CoinOp.syncbit(@network[:name]) do 
+      CoinOp.syncbit(@network[:name]) do
         @native.get_address
       end
     end

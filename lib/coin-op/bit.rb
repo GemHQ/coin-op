@@ -23,7 +23,7 @@ Bitcoin::NETWORKS[:dogecoin] = Bitcoin::NETWORKS[:litecoin].merge({
   retarget_time_new: 60, # 1 minute
   target_spacing: 60, # block interval
   dns_seeds: [
-    "seed.dogechain.info", 
+    "seed.dogechain.info",
     "seed.dogecoin.com",
   ],
   genesis_hash: "1a91e3dace36e2be3bf030a65679fe821aa1d6ef92e7c9902eb318182c355691",
@@ -72,7 +72,7 @@ module Bitcoin
     attach_function :BN_rshift1, [:pointer, :pointer], :int
     attach_function :BN_sub, [:pointer, :pointer, :pointer], :int
     attach_function :BN_num_bits, [:pointer], :int
-    
+
     def self.BN_num_bytes(ptr); (BN_num_bits(ptr) + 7) / 8; end
 
     # repack signature for OpenSSL 1.0.1k handling of DER signatures
@@ -123,12 +123,12 @@ module Bitcoin
       BN_free(halforder)
       BN_free(order)
       BN_CTX_free(ctx)
-      
+
       buf = FFI::MemoryPointer.new(:uint8, BN_num_bytes(s))
       BN_bn2bin(s, buf)
       length_s = BN_num_bytes(s)
       # p buf.read_string(length_s).unpack("H*")
-      
+
       # Re-encode the signature in DER format
       sig = [0x30, 0, 0x02, length_r]
       sig.concat(temp.slice(4, length_r))
@@ -259,5 +259,3 @@ require_relative "bit/fee"
 
 # Augmented functionality
 require_relative "bit/multi_wallet"
-
-

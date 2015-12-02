@@ -258,8 +258,13 @@ module CoinOp::Bit
       script.p2sh_address
     end
 
+    def p2pkh_address(name: nil)
+      name ||= @public_keys.keys.first
+      Script.new(public_key: @public_keys[name], network: network).address
+    end
+
     def p2sh_script
-      Script.new(:address => self.script.p2sh_address, network: network)
+      Script.new(address: self.script.p2sh_address, network: network)
     end
 
     def signatures(value, names:)
