@@ -215,11 +215,11 @@ module CoinOp::Bit
     include CoinOp::Encodings
 
     CODE_TO_NETWORK = {
-      0: :bitcoin,
-      1: :testnet3,
-      2: :litecoin,
-      3: :dogecoin,
-      9001: :bcy
+      0 => :bitcoin,
+      1 => :testnet3,
+      2 => :litecoin,
+      3 => :dogecoin,
+      9001 => :bcy
     }
 
     attr_reader :path, :private, :public, :keys, :public_keys
