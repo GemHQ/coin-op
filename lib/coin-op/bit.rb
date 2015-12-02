@@ -57,6 +57,14 @@ Bitcoin::NETWORKS[:dogecoin] = Bitcoin::NETWORKS[:litecoin].merge({
   auxpow_start_block: 371337
 })
 
+Bitcoin::NETWORKS[:bcy] = Bitcoin::NETWORKS[:testnet3].merge({
+  project: :bcy,
+  address_version: "19",
+#  magic_head: "\xc0\xc0\xc0\xc0",
+#  p2sh_version: "19", #??
+#  privkey_version: "9e" #??,
+})
+
 # bitcoin-ruby is not multi-network friendly.  It's also a hassle
 # to tell what network you're using if you don't already know.
 # This makes it a bit easier.
