@@ -59,9 +59,9 @@ Bitcoin::NETWORKS[:dogecoin] = Bitcoin::NETWORKS[:litecoin].merge({
 
 Bitcoin::NETWORKS[:bcy] = Bitcoin::NETWORKS[:testnet3].merge({
   project: :bcy,
-  address_version: "19",
+  address_version: "1b",
+  p2sh_version: "1f"
 #  magic_head: "\xc0\xc0\xc0\xc0",
-#  p2sh_version: "19", #??
 #  privkey_version: "9e" #??,
 })
 
