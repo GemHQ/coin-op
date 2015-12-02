@@ -260,7 +260,7 @@ module CoinOp::Bit
 
     def p2pkh_address(name: nil)
       name ||= @public_keys.keys.first
-      Script.new(public_key: @public_keys[name], network: network).address
+      Script.new(public_key: @public_keys[name].pub, network: network).address
     end
 
     def p2sh_script
