@@ -200,6 +200,13 @@ module CoinOp::Bit
       @native.hash
     end
 
+    # Returns the normalized transaction hash (the serialization exlcuding the
+    # signatures, which are malleable) encoded as hex
+    def normalized_hash
+      update_native
+      @native.normalized_hash
+    end
+
     def version
       @native.ver
     end
